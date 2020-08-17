@@ -1,0 +1,16 @@
+---
+
+## This play require the following variable set
+##   lambda_function_name: "name of lambda to be instrumented"
+##   region: ????
+##   with the new ones below
+
+
+- name: New Relic Log Ingestion lambda
+  cloudformation:
+    region: "{{ region }}"
+    state: "absent"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    capabilities: ["CAPABILITY_AUTO_EXPAND", "CAPABILITY_IAM"]
+    stack_name: "{{ lambda_function_name }}-log-ingestion-stack"

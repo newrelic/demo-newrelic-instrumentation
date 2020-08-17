@@ -1,0 +1,12 @@
+---
+
+- debug:
+    msg: Restarting NR Infrastructure agent
+
+- name: supervisord stop service
+  shell: systemctl stop newrelic-infra
+  become: true
+
+- name: supervisord start service
+  shell: systemctl start newrelic-infra
+  become: true

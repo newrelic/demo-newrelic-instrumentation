@@ -1,0 +1,55 @@
+---
+
+- fail:
+    msg: "licenseKey is required for instrumenting Lambda, please add this field to your user config."
+  when: license_key is not defined
+
+- fail:
+    msg: "accountId is required for instrumenting Lambda, please add this field to your user config."
+  when: account_id is not defined or account_id == ''
+
+- fail:
+    msg: "accountRootId is required for instrumenting Lambda, please add this field to your user config."
+  when: account_root_id is not defined or account_root_id == ''
+
+- name: Add Newrelic Python agent {{ agent_version }} to requirement for Pythontron
+  lineinfile:
+    path: "{{ deployment_path }}/{{ service_id }}/python/requirements.txt"
+    line: "newrelic=={{ agent_version }}"
+    insertbefore: BOF
+
+- name: Ensure instrumentation hook is imported part 1
+  blockinfile:
+    path: "{{ deployment_path }}/{{ service_id }}/python/lambda.py"
+    insertbefore: BOF
+    state: present
+    block: |
+      import newrelic.agent
+      newrelic.agent.initialize()
+
+- name: Ensure instrumentation hook is imported part 2
+  lineinfile:
+    path: "{{ deployment_path }}/{{ service_id }}/python/lambda.py"
+    insertbefore: "def lambda_handler"
+    line: "@newrelic.agent.lambda_handler()"
+    state: present
+
+- name: Set lambda environment variables
+  vars:
+    handler_name: lambda.lambda_handler
+    runtime: python3.7
+  lambda:
+    name: "{{ lambda_function_name }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ region }}"
+    role: "{{ iam_role_name }}"
+    handler: "{{ handler_name }}"
+    runtime: "{{ runtime }}"
+    environment_variables: {"NEW_RELIC_LICENSE_KEY": "{{license_key}}",
+        "NEW_RELIC_SERVERLESS_MODE_ENABLED": "true",
+        "NEW_RELIC_DISTRIBUTED_TRACING_ENABLED": "true",
+        "NEW_RELIC_ACCOUNT_ID": "{{account_id|string}}",
+        "NEW_RELIC_TRUSTED_ACCOUNT_KEY": "{{account_root_id|string}}"
+        }
+  delegate_to: localhost

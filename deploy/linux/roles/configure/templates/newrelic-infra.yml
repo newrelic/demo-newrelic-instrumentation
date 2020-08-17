@@ -1,0 +1,4 @@
+license_key: {{ license_key }}
+
+custom_attributes:
+  host: HOST

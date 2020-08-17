@@ -1,0 +1,44 @@
+---
+
+# This play require the following variable set
+#   license_key: "<license_key from credential>"
+#   with the new ones below
+#   agent_version: "5.12.0"
+#   service_display_name: "My app1"
+#   remote_user: "vm-user" or "ec2-user"
+#   service_id: "app1"
+#   nr_collector_url: (optional) "collector.newrelic.com" or other allowed url for collecting agent data
+
+- debug:
+    msg: "Installing newrelic java agent using ansible-galaxy extension. Make sure this has been run before executing this play: ansible-galaxy install newrelic.newrelic_java_agent"
+
+- name: Init the java agent config
+  set_fact:
+    nr_java_agent_config_vars: "{{ (nr_java_agent_config_vars|default({})) | combine({
+      'license_key': '{{ license_key }}',
+      'app_name': '{{ service_display_name }}',
+      'distributed_tracing': {
+        'enabled': true
+      }
+      })
+    }}"
+
+- set_fact:
+    nr_java_agent_config_vars: "{{ nr_java_agent_config_vars | combine({
+        'collector_host': '{{ nr_collector_url }}'
+      })
+    }}"
+  when: nr_collector_url is defined
+
+# This play requires the galaxy install for the newrelic java agent role: ansible-galaxy install newrelic.newrelic_java_agent
+- name: Install newrelic java agent
+  include_role:
+    name: newrelic.newrelic_java_agent
+  vars:
+    nr_java_agent_config: "{{nr_java_agent_config_vars}}"
+    server_type: tomcat
+    server_root: /opt/tomcat/latest
+    jvm_conf_file: /opt/tomcat/latest/bin/setenv.sh
+    server_user: tomcat
+    server_group: tomcat
+    restart_web_server: false

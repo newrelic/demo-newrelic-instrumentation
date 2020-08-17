@@ -1,0 +1,107 @@
+---
+
+# This play require the following variable set
+#   license_key: "<license_key from credential>"
+#   with the new ones below
+#   agent_version: "5.0.2.126"
+#   service_display_name: "My app1"
+#   remote_user: "vm-user"
+#   service_id: "app1"
+
+- name: Get python3 path
+  shell: which python3
+  register: python3_path
+
+- name: "Install NR python agent version {{ agent_version }}"
+  command: "{{ python3_path.stdout }} -m pip install newrelic=={{ agent_version }} --user"
+
+- name: Generate newrelic.ini configuration file
+  command: "~/.local/bin/newrelic-admin generate-config {{ license_key }} newrelic.ini"
+  args:
+    chdir: "/home/{{ remote_user }}/{{ service_id }}"
+
+- replace:
+    dest: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
+    regexp: 'Python Application'
+    replace: '{{ service_display_name }}'
+    backup: yes
+
+- replace:
+    dest: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
+    regexp: 'distributed_tracing.enabled = false'
+    replace: 'distributed_tracing.enabled = true'
+    backup: yes
+
+- name: Add host url if collector defined in user config
+  lineinfile:
+    path: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
+    insertafter: '^license_key'
+    line: host = {{ nr_collector_url }}
+  when: nr_collector_url is defined
+
+- name: Find python app entrypoint
+  find:
+    paths: "/home/{{ remote_user }}/{{ service_id }}"
+    contains: ".*import Flask*."
+    patterns: "*.py"
+  register: found
+
+- name: set python filename fact
+  set_fact:
+    python_file: "{{ item['path']}}"
+  with_items: "{{ found.files }}"
+
+- fail:
+    msg: "Could not find any .py file having flask, can't set instrumentation"
+  when: python_file is not defined
+
+- debug:
+    msg: Files {{ python_file }}
+  when: python_file is defined
+
+- name: Ensure instrumentation hook is imported
+  lineinfile:
+    path: "{{ python_file }}"
+    insertbefore: BOF
+    line: "import newrelic.agent"
+    state: present
+
+- name: Ensure instrumentation hook is initialized
+  lineinfile:
+    path: "{{ python_file }}"
+    insertafter: "^import newrelic.agent"
+    line: "newrelic.agent.initialize('/home/{{ remote_user }}/{{ service_id }}/newrelic.ini')"
+    state: present
+
+
+- name: Optional find logging usage
+  find:
+    paths: "{{python_file | dirname}}"
+    depth: 2
+    recurse: true
+    contains: ".*import logging*."
+    patterns: "*.py"
+  register: logging_found
+
+- name: set filename fact
+  set_fact:
+    logging_file: "{{ item['path']}}"
+  with_items: "{{ logging_found.files }}"
+
+- debug:
+    msg: Files {{ logging_file }} and directory {{ logging_file | dirname }}
+  when: logging_file is defined
+
+- name: Inject NR logger for log in context support
+  blockinfile:
+    path: "{{ logging_file }}"
+    insertafter: "^import logging"
+    marker: "# {mark} New Relic support for LiC"
+    block: |
+      from newrelic.agent import NewRelicContextFormatter
+      nrl_handler = logging.FileHandler("./application.log.json")
+      nrl_formatter = NewRelicContextFormatter()
+      nrl_handler.setFormatter(nrl_formatter)
+      nrl_root_logger = logging.getLogger()
+      nrl_root_logger.addHandler(nrl_handler)
+  when: (logging_file is defined) and (logging_file|length > 0)

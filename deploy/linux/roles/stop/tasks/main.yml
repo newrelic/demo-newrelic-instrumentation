@@ -1,0 +1,10 @@
+---
+
+- debug:
+    msg: Stopping NR Infrastructure agent
+
+- name: supervisord stop service
+  shell: systemctl stop newrelic-infra
+  become: true
+  ignore_errors: yes
+

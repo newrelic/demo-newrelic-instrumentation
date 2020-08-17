@@ -1,0 +1,99 @@
+---
+
+# This play require the following variable set
+#   license_key: "<license_key from credential>"
+#   agent_version: "8.23.107"
+#   service_display_name: "My app1"
+#   remote_user: "ec2-user"
+#   service_id: "app1"
+#   isDistributedTracingEnabled: false/true
+
+- fail:
+    msg: "A newrelic license key is required to instrument"
+  when: license_key is not defined
+
+- fail:
+    msg: "A newrelic agent_version is required to instrument"
+  when: agent_version is not defined
+
+- fail:
+    msg: "A service_display_name is required to instrument"
+  when: service_display_name is not defined
+
+- debug:
+    msg: Installing NR .Net (core) agent {{ agent_version }}
+- name: Performing install of NR .Net Core agent
+  yum:
+    name: https://download.newrelic.com/pub/newrelic/el7/x86_64/newrelic-netcore20-agent-{{ agent_version }}.0-1.x86_64.rpm
+    state: present
+  become: yes
+
+- name: Find csproj files
+  find:
+    paths: "/home/{{ remote_user }}/{{ service_id }}"
+    depth: 2
+    recurse: true
+    contains: ".*NewRelic.Agent.Api*."
+    patterns: ".*csproj"
+    use_regex: yes
+  register: projects_found
+
+- name: Update correct agent version
+  replace:
+    path: "{{ item['path'] }}"
+    regexp: 'Include="NewRelic.Agent.Api" Version="\d.\d.\d"'
+    replace: 'Include="NewRelic.Agent.Api" Version="{{ agent_version }}"'
+    backup: no
+  with_items: "{{ projects_found.files }}"
+
+- name: Update NR .Net Core agent configuration application name
+  replace:
+    dest: /usr/local/newrelic-netcore20-agent/newrelic.config
+    regexp: 'My Application'
+    replace: '{{ service_display_name }}'
+  become: yes
+
+- name: Remove prior service licenseKey from .Net Core agent
+  lineinfile:
+    path: /usr/local/newrelic-netcore20-agent/newrelic.config
+    regexp: '<service licenseKey'
+    state: absent
+  become: yes
+
+- name: Add service licenseKey back in with correct value
+  lineinfile:
+    path: /usr/local/newrelic-netcore20-agent/newrelic.config
+    insertbefore: '<application>'
+    line: "\t<service licenseKey=\"{{ license_key }}\" />"
+    state: present
+  become: yes 
+  when: nr_collector_url is not defined
+
+- name: Add newrelic collector url with license key
+  lineinfile:
+    path: /usr/local/newrelic-netcore20-agent/newrelic.config
+    insertbefore: '<application>'
+    line: "\t<service licenseKey=\"{{ license_key }}\" host=\"{{ nr_collector_url }}\" />"
+    state: present
+  become: yes 
+  when: nr_collector_url is defined
+
+- name: Remove prior distributed tracing configuration from .Net Core agent
+  lineinfile: 
+    path: /usr/local/newrelic-netcore20-agent/newrelic.config
+    regexp: '<distributedTracing enabled="(true|false)" />'
+    state: absent
+  become: yes
+
+- name: Set default for DT enabled
+  set_fact:
+    isDistributedTracingEnabled: true
+  when: isDistributedTracingEnabled is not defined
+
+- name: Add new distributed tracing configuration to .Net Core agent
+  lineinfile:
+    path: /usr/local/newrelic-netcore20-agent/newrelic.config
+    insertbefore: '</configuration>'
+    line: "\t<distributedTracing enabled=\"{{ isDistributedTracingEnabled|lower }}\" />"
+    state: present
+  become: yes  

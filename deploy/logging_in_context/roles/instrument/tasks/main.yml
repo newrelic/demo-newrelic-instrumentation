@@ -1,0 +1,87 @@
+---
+- debug:
+      msg: Setup New Relic Logging in Context for service {{ service_id }}
+
+- fail:
+    msg: "insights_insert_api_key is required"
+  when: insights_insert_api_key is not defined
+
+- fail:
+    msg: "insights_insert_api_key should not be empty"
+  when: insights_insert_api_key == ""
+# ansible bug, comparison to empty string dont work, waiting on https://github.com/ansible/ansible/pull/62602 to be released
+
+- name: Configure td-agent for sending log to NR Logging product
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} New Relic Insights Insert Key Setup for Logging"
+    block: |
+      <match **>
+        @type newrelic
+        api_key {{ insights_insert_api_key }}
+      </match>
+  become: yes
+  when: nr_logging_url is not defined
+
+- name: Configure td-agent to send logs on specific NR URL
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} New Relic Insights Insert Key Setup for Logging"
+    block: |
+      <match **>
+        @type newrelic
+        api_key {{ insights_insert_api_key }}
+        base_uri {{ nr_logging_url }}
+      </match>
+  become: yes
+  when: nr_logging_url is defined
+
+- name: Configure td-agent flush frequency
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} Flush Frequency optimized for demo"
+    block: |
+      <buffer>
+        # Default is 1m, but we don’t want demo-er to have to wait that long
+        flush_mode interval
+        flush_interval 10s
+      </buffer>
+  become: yes
+
+- name: Touch and allow td-agent access to "~/{{service_id}}/application.log.json" file
+  file:
+    path: "/home/{{ ansible_user }}/{{service_id}}/application.log.json"
+    mode: g=rw
+    owner: "{{ ansible_user }}"
+    group: td-agent
+    state: touch
+  become: yes
+
+- name: Touch and allow td-agent access to "~/{{service_id}}/application.log.json.pos" file
+  file:
+    path: "/home/{{ ansible_user }}/{{service_id}}/application.log.json.pos"
+    mode: g=rw
+    owner: "{{ ansible_user }}"
+    group: td-agent
+    state: touch
+  become: yes
+
+- name: Configure td-agent for ~/{{service_id}}/application.log and ~/{{service_id}}/application.log.json.pos files
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} {{ service_id }} application.log.json and application.log.json.pos file"
+    block: |
+      <source>
+        @type tail
+        path /home/{{ ansible_user }}/{{service_id}}/application.log.json
+        pos_file /home/{{ ansible_user }}/{{service_id}}/application.log.json.pos
+        tag {{ service_display_name }}
+        <parse>
+          @type none
+        </parse>
+      </source>
+  become: yes
+
+- name: Restart the td-agent process
+  shell: '/etc/init.d/td-agent restart'
+  become: yes

@@ -1,0 +1,129 @@
+---
+- debug:
+      msg: Setup New Relic Logging for service {{ service_id }}
+
+- fail:
+    msg: "stdout_path is required"
+  when: stdout_path is not defined
+
+- fail:
+    msg: "stderr_path is required"
+  when: stderr_path is not defined
+
+- fail:
+    msg: "insights_insert_api_key is required"
+  when: insights_insert_api_key is not defined
+
+- fail:
+    msg: "insights_insert_api_key should not be empty"
+  when: insights_insert_api_key == ""
+# ansible bug, comparison to empty string dont work, waiting on https://github.com/ansible/ansible/pull/62602 to be released
+
+- name: Configure td-agent for sending log to NR Logging product
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} New Relic Insights Insert Key Setup for Logging"
+    block: |
+      <match **>
+        @type newrelic
+        api_key {{ insights_insert_api_key }}
+      </match>
+  become: yes
+  when: nr_logging_url is not defined
+
+- name: Configure td-agent to send logs on specific NR URL
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} New Relic Insights Insert Key Setup for Logging"
+    block: |
+      <match **>
+        @type newrelic
+        api_key {{ insights_insert_api_key }}
+        base_uri {{ nr_logging_url }}
+      </match>
+  become: yes
+  when: nr_logging_url is defined
+
+- name: Configure td-agent flush frequency
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} Flush Frequency optimized for demo"
+    block: |
+      <buffer>
+        # Default is 1m, but we don’t want demo-er to have to wait that long
+        flush_mode interval
+        flush_interval 10s
+      </buffer>
+  become: yes
+
+- name: Touch and allow td-agent access to "{{ stdout_path }}" file
+  file:
+    path: "{{ stdout_path }}"
+    mode: g=rw
+    owner: "{{ ansible_user }}"
+    group: td-agent
+    state: touch
+  become: yes
+
+- name: Touch and allow td-agent access to "{{ stdout_path }}".pos file
+  file:
+    path: "{{ stdout_path }}.pos"
+    mode: g=rw
+    owner: "{{ ansible_user }}"
+    group: td-agent
+    state: touch
+  become: yes
+
+- name: Configure td-agent for stdout log and .pos files
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} {{ service_id }} standard out pos file"
+    block: |
+      <source>
+        @type tail
+        path {{ stdout_path }}
+        pos_file {{ stdout_path }}.pos
+        tag {{ service_id }}
+        <parse>
+          @type none
+        </parse>
+      </source>
+  become: yes
+
+- name: Touch and allow td-agent access to "{{ stderr_path }}" file
+  file:
+    path: "{{ stderr_path }}"
+    mode: g=rw
+    owner: "{{ ansible_user }}"
+    group: td-agent
+    state: touch
+  become: yes
+
+- name: Touch and allow td-agent access to "{{ stderr_path }}".pos file
+  file:
+    path: "{{ stderr_path }}.pos"
+    mode: g=rw
+    owner: "{{ ansible_user }}"
+    group: td-agent
+    state: touch
+  become: yes
+
+- name: Configure td-agent for stderr log and .pos files
+  blockinfile:
+    path: /etc/td-agent/td-agent.conf
+    marker: "# {mark} {{ service_id }} standard error pos file"
+    block: |
+      <source>
+        @type tail
+        path {{ stderr_path }}
+        pos_file {{ stderr_path }}.pos
+        tag {{ service_id }}
+        <parse>
+          @type none
+        </parse>
+      </source>
+  become: yes
+
+- name: Restart the td-agent process
+  shell: '/etc/init.d/td-agent restart'
+  become: yes

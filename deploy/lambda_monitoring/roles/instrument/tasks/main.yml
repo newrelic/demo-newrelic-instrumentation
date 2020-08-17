@@ -1,0 +1,98 @@
+---
+
+## This play require the following variable set
+##   lambda_function_name: "name of lambda to be instrumented"
+##   region: ????
+##   with the new ones below
+
+- fail:
+    msg: "license_key is required for Configuring NewRelic Lambda monitoring"
+  when: license_key is not defined
+
+- block:
+  - name: Download aws-log-ingest project
+    get_url:
+      url: https://github.com/newrelic/aws-log-ingestion/archive/master.zip
+      dest: "{{ playbook_dir }}/aws-log-ingestion.zip"
+
+  - name: Unarchive New Relic aws-log-ingest project
+    unarchive:
+      src: "{{ playbook_dir }}/aws-log-ingestion.zip"
+      dest: "{{ playbook_dir }}/"
+
+  - name: run pip install requirements
+    command:
+      cmd: pip install -r requirements.txt --target=./
+      chdir: "{{ playbook_dir }}/aws-log-ingestion-master/src/"
+
+  - name: Archive aws-log-ingest's function.py file
+    archive:
+      path:
+        - "{{ playbook_dir }}/aws-log-ingestion-master/src/"
+      dest: "{{ playbook_dir }}/aws-log-ingestion-master/src/lambda.zip"
+      format: zip
+  delegate_to: localhost
+
+- s3_bucket:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ region }}"
+    state: present
+    name: "{{ lambda_function_name }}-nrli-{{ api_id }}"
+  retries: 6
+  delay: 10
+  register: result
+  until: result is not failed
+
+- debug:
+    msg: "Creating {{ lambda_function_name }}-nrli-{{ api_id }} bucket"
+
+- name: Upload function.py archive to temporary S3 bucket
+  s3_sync:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ region }}"
+    bucket: "{{ lambda_function_name }}-nrli-{{ api_id }}"
+    file_root: "{{ playbook_dir }}/aws-log-ingestion-master/src/"
+    exclude: "*.py"
+
+- debug:
+    msg: "Executing CloudFormation template with function base name {{ lambda_function_name }} and api_id {{ api_id }}"
+
+- set_fact:
+    nr_logging_url: ""
+  when: nr_logging_url is not defined
+
+- set_fact:
+    nr_cloud_collector_url: ""
+  when: nr_cloud_collector_url is not defined
+
+- name: New Relic Log Ingestion lambda
+  cloudformation:
+    state: "present"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ region }}"
+    capabilities: ["CAPABILITY_AUTO_EXPAND", "CAPABILITY_IAM"]
+    stack_name: "{{ lambda_function_name }}-log-ingestion-stack"
+    template_body: "{{ lookup('template', 'templates/nr-ingestion-lambda.j2') }}"
+    template_parameters:
+      NRLicenseKey: "{{ license_key }}"
+      NRLoggingEndpoint: "{{ nr_logging_url }}"
+      NRInfraEndpoint: "{{ nr_cloud_collector_url }}"
+      IngestLambdaName: "{{ lambda_function_name }}-nr-log-ingestion"
+      ZipName: "lambda.zip"
+      SourceFunctionName: "{{ lambda_function_name }}"
+      BucketName: "{{ lambda_function_name }}-nrli-{{ api_id }}"
+
+- s3_bucket:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ region }}"
+    state: absent
+    name: "{{ lambda_function_name }}-nrli-{{ api_id }}"
+    force: yes
+  retries: 3
+  delay: 30
+  register: result
+  until: result is not failed

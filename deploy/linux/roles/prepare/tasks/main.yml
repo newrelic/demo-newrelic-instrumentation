@@ -1,0 +1,47 @@
+---
+
+- fail:
+    msg: "infrastructureAgentVersion is required for preparing NewRelic Infrastructure Agent"
+  when: version is not defined
+
+- debug:
+    msg: Installing NR Infrastructure agent {{ version }}
+
+- block:
+  - name: check aws linux2 version
+    shell: cat /etc/os-release | grep "Linux 2" | wc -l
+    register: awslinux2
+
+  - name: check linux7 version
+    shell: cat /etc/os-release | grep "Linux 7" | wc -l
+    register: linux7
+
+  - name: install default linux agent
+    yum:
+      name: 'https://download.newrelic.com/infrastructure_agent/linux/yum/el/6/x86_64/newrelic-infra-{{ version }}-1.x86_64.rpm'
+      state: present
+    when: awslinux2.stdout|int == 0 and linux7.stdout|int == 0
+    ignore_errors: yes
+    register: result
+
+  - name: install default linux agent alternate name
+    yum:
+      name: 'https://download.newrelic.com/infrastructure_agent/linux/yum/el/6/x86_64/newrelic-infra-{{ version }}-1.el6.x86_64.rpm'
+      state: present
+    when: (awslinux2.stdout|int == 0 and linux7.stdout|int == 0) and result is failed
+
+  - name: install linux 2 agent
+    yum:
+      name: 'https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64/newrelic-infra-{{ version }}-1.x86_64.rpm'
+      state: present
+    when: awslinux2.stdout|int > 0 or linux7.stdout|int > 0
+    ignore_errors: yes
+    register: result
+
+  - name: install linux 2 agent alternate name
+    yum:
+      name: 'https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64/newrelic-infra-{{ version }}-1.el7.x86_64.rpm'
+      state: present
+    when: (awslinux2.stdout|int > 0 or linux7.stdout|int > 0) and result is failed
+
+  become: yes

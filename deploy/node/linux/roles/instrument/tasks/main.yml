@@ -1,0 +1,203 @@
+---
+
+# This play require the following variable set
+#   license_key: "<license_key from credential>"
+#   with the new ones below
+#   agent_version: "6.2.0"
+#   service_display_name: "My app1"
+#   remote_user: "vm-user"
+#   service_id: "app1"
+#   nr_collector_url: "collector.newrelic.com" or other allowed url for collecting agent data
+
+- name: Find package.json files
+  find:
+    paths: "/home/{{ remote_user }}/{{ service_id }}"
+    contains: ".*dependencies*."
+    patterns: "package.json"
+  register: package_found
+
+- name: set filename fact
+  set_fact:
+    package_file: "{{ item['path'] }}"
+  with_items: "{{ package_found.files }}"
+
+- fail:
+    msg: "Could not find any package.json file having dependencies, can't set instrumentation"
+  when: package_file is not defined
+
+- debug:
+    msg: Files {{ package_file }} and directory {{ package_file | dirname }}
+  when: package_file is defined
+
+- name: Add new relic agent variable to package.json
+  lineinfile:
+    path: "{{ package_file }}"
+    insertafter: 'dependencies'
+    line: '"newrelic": "{{agent_version}}",'
+
+- name: Install NR NodeJS agent
+  shell: "npm install newrelic@{{agent_version}} --save"
+  args:
+    chdir: "{{ package_file | dirname }}"
+
+- name: Add ejs to package.json
+  lineinfile:
+    path: "{{ package_file }}"
+    insertafter: 'dependencies'
+    line: '"ejs": "^3.0.1",'
+
+- name: Install EJS
+  shell: "npm install ejs --save"
+  args:
+    chdir: "{{ package_file | dirname }}"
+
+- name: Copy newrelic.js to service root
+  shell: "cp node_modules/newrelic/newrelic.js newrelic.js"
+  args:
+    chdir: "{{ package_file | dirname }}"
+
+- replace:
+    dest: "{{package_file | dirname}}/newrelic.js"
+    regexp: 'My Application'
+    replace: '{{ service_display_name }}'
+    backup: yes
+
+- name: Add newrelic collector url
+  lineinfile:
+    path: "{{package_file | dirname}}/newrelic.js"
+    line: "host: '{{ nr_collector_url }}',"
+    insertafter: 'license key here'
+  when: nr_collector_url is defined
+
+- replace:
+    dest: "{{package_file | dirname}}/newrelic.js"
+    regexp: 'license key here'
+    replace: '{{ license_key }}'
+
+- name: Find if DT is defaulted
+  lineinfile:
+    path: "{{ package_file | dirname }}/newrelic.js"
+    regexp: ".*distributed_tracing:*."
+    line: "distributed_tracing"
+    state: present
+  check_mode: yes
+  register: dt_found
+
+- name: Enable distributed tracing
+  blockinfile:
+    path: "{{ package_file | dirname }}/newrelic.js"
+    insertafter: ".*exports.config*."
+    marker: "// {mark} turn newrelic distributed tracing on"
+    block: |
+      distributed_tracing: {
+        enabled: true
+      },
+  when: dt_found is not changed
+
+- name: Replace DT flag
+  replace:
+    path: "{{ package_file | dirname }}/newrelic.js"
+    after: ".*distributed_tracing:*."
+    regexp: '.*enabled[:][ ]false*.'
+    replace: 'enabled: true'
+  when: dt_found is changed
+
+- name: Ensure views directory exist
+  file:
+    path: "{{package_file | dirname}}/views"
+    state: directory
+
+- name: Find html files
+  find:
+    paths: "{{package_file | dirname}}/public"
+    contains: '.*[<]title[>]*.'
+    patterns: "*.html"
+  register: html_found
+
+- name: Add new relic instrumentation script through templating
+  lineinfile:
+    path: "{{ item['path'] }}"
+    insertafter: '.*[<]title[>]*.'
+    line: "    <%- nreum %>"
+  with_items: "{{ html_found.files }}"
+
+- name: Move templated file to views
+  shell:
+    cmd: "mv {{ item['path'] }} {{package_file | dirname}}/views"
+  with_items: "{{ html_found.files }}"
+
+
+- name: Find node main js files
+  find:
+    paths: "{{package_file | dirname}}"
+    contains: ".*app[.]listen[(]*."
+    patterns: "*.js"
+  register: main_found
+
+- name: set main filename fact
+  set_fact:
+    main_file: "{{ item['path']}}"
+  with_items: "{{ main_found.files }}"
+
+- fail:
+    msg: "Could not find any main js file with 'app.listen(' which is required, can't set instrumentation"
+  when: main_file is not defined
+
+- debug:
+    msg: Files {{ main_file }} and directory {{ main_file | dirname }}
+  when: main_file is defined
+
+- name: Add new relic require statement to main js at the top of the file
+  lineinfile:
+    path: "{{ main_file }}"
+    line: "var newrelic = require('newrelic')"
+    insertbefore: BOF
+
+- name: Enable templating to inject NR instrumentation into html pages
+  blockinfile:
+    path: "{{ main_file }}"
+    insertbefore: ".*app[.]listen[(]*."
+    marker: "// {mark} New Relic Browser instrumentation using templating to inject instrumentation javascript"
+    block: |
+      app.engine('html', require('ejs').renderFile)
+      app.set('view engine', 'html')
+      app.get('/', function(req, res) {
+        res.render('index', {nreum: newrelic.getBrowserTimingHeader()})
+      });
+
+
+- name: Optional Find winston library usage
+  find:
+    paths: "{{package_file | dirname}}"
+    contains: ".*winston[.]createLogger[(]*."
+    patterns: "*.js"
+  register: winston_found
+
+- name: set winston filename fact
+  set_fact:
+    winston_file: "{{ item['path']}}"
+  with_items: "{{ winston_found.files }}"
+
+- debug:
+    msg: Files {{ winston_file }} and directory {{ winston_file | dirname }}
+  when: winston_file is defined
+
+- name: Install NR winston enricher plugin
+  shell: "npm install @newrelic/winston-enricher --save"
+  args:
+    chdir: "{{ package_file | dirname }}"
+  when: winston_file is defined
+
+- name: Inject NR logger for log in context support
+  blockinfile:
+    path: "{{ winston_file }}"
+    insertafter: ".*winston[.]createLogger[(]*."
+    marker: "// {mark} New Relic support for LiC"
+    block: |
+      const newrelicFormatter = require('@newrelic/winston-enricher')
+      logger.add(new winston.transports.File(
+        { 
+          format: winston.format.combine(newrelicFormatter(), winston.format.json()),
+          filename: "{{package_file | dirname}}/application.log.json"
+        }))
+  when: winston_file is defined

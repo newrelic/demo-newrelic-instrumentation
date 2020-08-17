@@ -1,0 +1,107 @@
+---
+Description: Sends log data from CloudWatch Logs and S3 to New Relic Infrastructure (Cloud integrations) and New Relic Logging.
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  NRLicenseKey:
+    Type: String
+  NRLoggingEndpoint:
+    Type: String
+  NRInfraEndpoint:
+    Type: String
+  ZipName:
+    Type: String
+  IngestLambdaName:
+    Type: String
+  SourceFunctionName:
+    Type: String
+  BucketName:
+    Type: String
+
+Conditions:
+  IsNRLoggingReportingOverriden: !Not [ !Equals [!Ref NRLoggingEndpoint,  ""] ]
+  IsNRInfraReportingOverriden: !Not [ !Equals [!Ref NRInfraEndpoint,  ""] ]
+
+Resources:
+  NewRelicLogIngestionFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action:
+          - sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      SourceAccount:
+        Ref: AWS::AccountId
+      FunctionName:
+        Ref: NewRelicLogIngestionFunction
+      SourceArn:
+        Fn::Join:
+        - ''
+        - - 'arn:aws:logs'
+          - ':'
+          - Ref: AWS::Region
+          - ':'
+          - Ref: AWS::AccountId
+          - ':'
+          - 'log-group:/aws/lambda/'
+          - Ref: SourceFunctionName
+          - ':*'
+      Principal:
+        Fn::Join:
+        - '.'
+        - - 'logs'
+          - Ref: AWS::Region
+          - "amazonaws.com"
+
+  NewRelicLogIngestionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: BucketName
+        S3Key:
+          Ref: ZipName
+      FunctionName:
+        Ref: IngestLambdaName
+      Environment:
+        Variables:
+          LICENSE_KEY: !Ref NRLicenseKey
+          LOGGING_ENABLED: true
+          NR_LOGGING_ENDPOINT: !If [IsNRLoggingReportingOverriden, !Ref NRLoggingEndpoint, !Ref "AWS::NoValue"]
+          NR_INFRA_ENDPOINT: !If [IsNRInfraReportingOverriden, !Ref NRInfraEndpoint, !Ref "AWS::NoValue"]
+      Handler: function.lambda_handler
+      Role:
+        Fn::GetAtt:
+        - NewRelicLogIngestionFunctionRole
+        - Arn
+      Timeout: 30
+      Runtime: python3.7
+
+  SubscriptionFilter:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      LogGroupName:
+        Fn::Join:
+        - ''
+        - - "/aws/lambda/"
+          - Ref: SourceFunctionName
+      FilterPattern: ""
+      DestinationArn:
+        Fn::GetAtt:
+        - NewRelicLogIngestionFunction
+        - Arn
+    DependsOn:
+      - LambdaInvokePermission
+      - NewRelicLogIngestionFunctionRole
+      - NewRelicLogIngestionFunction
