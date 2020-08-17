@@ -136,7 +136,7 @@ This instrumentation is dependent on the application to generate a log file in i
 For example if a service was being deployed with the V3-Deployer with an id of "node1" on an AWS EC2 instance, the log file should be in the path /home/ec2-user/node1/application.log.json
 
 ## Contributing
-We encourage your contributions to improve [project name]! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
+We encourage your contributions to improve V3 Instrumentation! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
 If you have any questions, or to execute our corporate CLA, required if your contribution is on behalf of a company, please drop us an email at opensource@newrelic.com.
 
 ## License
