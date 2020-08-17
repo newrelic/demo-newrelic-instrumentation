@@ -13,6 +13,14 @@
       src: newrelic-infra.yml
       dest: /etc/newrelic-infra.yml
 
+  - name: Add tags header
+    lineinfile:
+      path: "/etc/newrelic-infra.yml"
+      line: "  {{item.key}}:{{item.value}}"
+      insertafter: 'custom_attributes:'
+    loop: "{{ (tags|default({}))|dict2items }}"
+    when: tags is defined
+
   - name: Add newrelic infra collector url for infrastructure
     lineinfile:
       path: "/etc/newrelic-infra.yml"
