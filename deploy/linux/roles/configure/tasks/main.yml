@@ -16,7 +16,7 @@
   - name: Add tags header
     lineinfile:
       path: "/etc/newrelic-infra.yml"
-      line: "  {{item.key}}:{{item.value}}"
+      line: "  {{item.key}}: {{item.value}}"
       insertafter: 'custom_attributes:'
     loop: "{{ (tags|default({}))|dict2items }}"
     when: tags is defined
@@ -41,18 +41,5 @@
       line: "identity_url: {{ nr_identity_url }}"
       insertafter: 'license_key:'
     when: nr_identity_url is defined
-
-  - name: register hostname for use as 'host' variable
-    shell: echo $HOSTNAME
-    register: hostname
-
-  - set_fact: 
-      host={{ hostname.stdout }}  
-
-  - replace:
-      dest: /etc/newrelic-infra.yml
-      regexp: 'HOST'
-      replace: '{{ host }}'
-      backup: yes
 
   become: yes
