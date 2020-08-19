@@ -1,8 +1,8 @@
 [![Experimental Project header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Experimental.png)](https://opensource.newrelic.com/oss-category/#experimental)
 
-# V3-Newrelic-Instrumentation
+# demo-newrelic-instrumentation
 
-This repository is intended to be used by the [V3 deployer](https://github.com/newrelic/demo-deployer).
+This repository is intended to be used by the [demo-deployer](https://github.com/newrelic/demo-deployer).
 
 ## Supported NewRelic versions
 ### On-Host/Infrastructure
@@ -11,7 +11,7 @@ This repository is intended to be used by the [V3 deployer](https://github.com/n
 All the current and documented releases on this page are supported
 https://docs.newrelic.com/docs/release-notes/infrastructure-release-notes/infrastructure-agent-release-notes
 
-### V3-Deployer
+### demo-deployer
 
 #### User configuration
 
@@ -56,7 +56,7 @@ To instrument a Linux host use this path for the deploy script path
 All the current and documented releases on this page are supported
 https://docs.newrelic.com/docs/release-notes/agent-release-notes/nodejs-release-notes/
 
-#### V3 Deployer 'deploy_script_path'
+#### demo-deployer 'deploy_script_path'
 To instrument a NodeJS service use this path for the deploy script path
 
       "deploy_script_path": "deploy/node/linux/roles"
@@ -88,7 +88,7 @@ const logger = winston.createLogger()
 All the current and documented releases on this page are supported
 https://docs.newrelic.com/docs/release-notes/agent-release-notes/java-release-notes
 
-#### V3 Deployer '
+#### demo-deployer 'deploy_script_path'
 
 ##### Ansible pre-requesite
 
@@ -105,27 +105,17 @@ To instrument a Java service hosted on Tomcat, use this path for the deploy scri
 All the current and documented releases on this page are supported
 https://docs.newrelic.com/docs/release-notes/agent-release-notes/python-release-notes
 
-#### V3 Deployer 'deploy_script_path'
+#### demo-deployer 'deploy_script_path'
 To instrument a Python service use this path for the deploy script path
 
       "deploy_script_path": "deploy/python/linux/roles"
 
-### V3-Gotron
-
-#### New Relic
-Only the Go agent version 3.0.0 and above are supported with V3-Gotron
-See all the documented releases on this page
-https://github.com/newrelic/go-agent/releases
-
 ### Logging
-The below play is meant to be use with the installation of the V3-Fluentd application as a service in the https://github.com/newrelic/demo-deployer.
+The below play is meant to be use with the installation of the Fluentd application as a service in the https://github.com/newrelic/demo-deployer.
 Then add a service instrumentation with the below script path to ensure the logs are sent to NR.
-Please see the [V3-Deployer](https://github.com/newrelic/demo-deployer) documentation for the setup of the NR api keys.
+Please see the [demo-deployer](https://github.com/newrelic/demo-deployer) documentation for the setup of the NR api keys.
 
         "deploy_script_path": "deploy/logging/roles"
-
-Note, until RPM LogsInContext functionality is GA, you'll want to enable the following feature flag for your account and user: 3047, 3015, 3077
-Also please note, Logging has an additional licensing requirement.
 
 #### Logging in Context
 Similar to logging, there is also another specific play for instrumenting with Logging in Context.
@@ -133,11 +123,11 @@ Similar to logging, there is also another specific play for instrumenting with L
         "deploy_script_path": "deploy/logging_in_context/roles"
 
 This instrumentation is dependent on the application to generate a log file in its directory named `application.log.json`
-For example if a service was being deployed with the V3-Deployer with an id of "node1" on an AWS EC2 instance, the log file should be in the path /home/ec2-user/node1/application.log.json
+For example if a service was being deployed with the demo-deployer with an id of "node1" on an AWS EC2 instance, the log file should be in the path /home/ec2-user/node1/application.log.json
 
 ## Contributing
-We encourage your contributions to improve V3 Instrumentation! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
+We encourage your contributions to improve demo-newrelic-instrumentation! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
 If you have any questions, or to execute our corporate CLA, required if your contribution is on behalf of a company, please drop us an email at opensource@newrelic.com.
 
 ## License
-V3-Newrelic-instrumentation is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
+demo-newrelic-instrumentation is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
