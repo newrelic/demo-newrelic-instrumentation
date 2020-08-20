@@ -67,7 +67,7 @@ Here is an instrumentor configuration example:
       "id": "nr_node_agent",
       "service_ids": ["simulator"],
       "provider": "newrelic",
-      "source_repository": "-b main git@github.com:newrelic/demo-instrumentation.git",
+      "source_repository": "-b main https://github.com/newrelic/demo-newrelic-instrumentation.git",
       "deploy_script_path": "deploy/node/linux/roles",
       "version": "6.2.0"
 },
