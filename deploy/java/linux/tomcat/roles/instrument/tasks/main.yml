@@ -33,7 +33,7 @@
 
 - name: Format tags into a list
   set_fact:
-    tags_list: "{{ tags_list | default([]) }} + [ {{item.key}}{{':'}}{{item.value}} ]"
+    tags_list: "{{ tags_list | default([]) }} + [ '{{item.key}}{{':'}}{{item.value}}' ]"
   loop: "{{ (tags|default({}))|dict2items }}"
   when: tags is defined
 - name: Format tags list into a single string
