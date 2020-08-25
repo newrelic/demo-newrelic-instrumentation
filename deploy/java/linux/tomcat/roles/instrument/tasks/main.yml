@@ -38,7 +38,7 @@
   when: tags is defined
 - name: Format tags list into a single string
   set_fact:
-    tags_string: "{{ tags_list | join(";") }}"
+    tags_string: "{{ tags_list | join(';') }}"
   when: tags_list is defined
 - set_fact:
     nr_java_agent_config_vars: "{{ nr_java_agent_config_vars | combine({
