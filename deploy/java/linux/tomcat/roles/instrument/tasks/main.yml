@@ -42,7 +42,7 @@
   when: tags_list is defined
 - set_fact:
     nr_java_agent_config_vars: "{{ nr_java_agent_config_vars | combine({
-        'labels': {{ tags_string }}
+        'labels': '{{ tags_string }}'
       })
     }}"
   when: tags_string is defined
