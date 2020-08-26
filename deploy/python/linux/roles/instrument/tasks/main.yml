@@ -26,6 +26,22 @@
     replace: '{{ service_display_name }}'
     backup: yes
 
+- name: Format tags into a list
+  set_fact:
+    tags_list: "{{ tags_list | default([]) }} + [ '{{item.key}}{{':'}}{{item.value}}' ]"
+  loop: "{{ (tags|default({}))|dict2items }}"
+  when: tags is defined
+- name: Format tags list into a single string
+  set_fact:
+    tags_string: "{{ tags_list | join(';') }}"
+  when: tags_list is defined
+- name: Add tags to the newrelic.ini
+  lineinfile:
+    path: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
+    insertafter: '^license_key'
+    line: "labels = {{ tags_string }}"
+  when: nr_collector_url is defined
+
 - replace:
     dest: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
     regexp: 'distributed_tracing.enabled = false'
