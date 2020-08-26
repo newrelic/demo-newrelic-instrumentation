@@ -40,7 +40,7 @@
     path: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
     insertafter: '^license_key'
     line: "labels = {{ tags_string }}"
-  when: nr_collector_url is defined
+  when: tags_string is defined
 
 - replace:
     dest: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
