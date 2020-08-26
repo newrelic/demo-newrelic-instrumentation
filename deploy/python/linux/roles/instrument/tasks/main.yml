@@ -73,7 +73,6 @@
     line: "newrelic.agent.initialize('/home/{{ remote_user }}/{{ service_id }}/newrelic.ini')"
     state: present
 
-
 - name: Optional find logging usage
   find:
     paths: "{{python_file | dirname}}"
