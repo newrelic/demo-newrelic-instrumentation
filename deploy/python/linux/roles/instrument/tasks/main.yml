@@ -7,6 +7,7 @@
 #   service_display_name: "My app1"
 #   remote_user: "vm-user"
 #   service_id: "app1"
+#   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
 
 - name: Get python3 path
   shell: which python3
@@ -25,6 +26,22 @@
     regexp: 'Python Application'
     replace: '{{ service_display_name }}'
     backup: yes
+
+- name: Format tags into a list
+  set_fact:
+    tags_list: "{{ tags_list | default([]) }} + [ '{{item.key}}{{':'}}{{item.value}}' ]"
+  loop: "{{ (tags|default({}))|dict2items }}"
+  when: tags is defined
+- name: Format tags list into a single string
+  set_fact:
+    tags_string: "{{ tags_list | join(';') }}"
+  when: tags_list is defined
+- name: Add tags to the newrelic.ini
+  lineinfile:
+    path: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
+    insertafter: '^license_key'
+    line: "labels = {{ tags_string }}"
+  when: tags_string is defined
 
 - replace:
     dest: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
@@ -72,7 +89,6 @@
     insertafter: "^import newrelic.agent"
     line: "newrelic.agent.initialize('/home/{{ remote_user }}/{{ service_id }}/newrelic.ini')"
     state: present
-
 
 - name: Optional find logging usage
   find:
