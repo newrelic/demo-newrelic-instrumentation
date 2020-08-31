@@ -7,6 +7,7 @@
 #   service_display_name: "My app1"
 #   remote_user: "vm-user"
 #   service_id: "app1"
+#   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
 
 - name: Get python3 path
   shell: which python3
