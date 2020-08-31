@@ -8,6 +8,7 @@
 #   remote_user: "vm-user" or "ec2-user"
 #   service_id: "app1"
 #   nr_collector_url: (optional) "collector.newrelic.com" or other allowed url for collecting agent data
+#   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
 
 - debug:
     msg: "Installing newrelic java agent using ansible-galaxy extension. Make sure this has been run before executing this play: ansible-galaxy install newrelic.newrelic_java_agent"
@@ -29,6 +30,22 @@
       })
     }}"
   when: nr_collector_url is defined
+
+- name: Format tags into a list
+  set_fact:
+    tags_list: "{{ tags_list | default([]) }} + [ '{{item.key}}{{':'}}{{item.value}}' ]"
+  loop: "{{ (tags|default({}))|dict2items }}"
+  when: tags is defined
+- name: Format tags list into a single string
+  set_fact:
+    tags_string: "{{ tags_list | join(';') }}"
+  when: tags_list is defined
+- set_fact:
+    nr_java_agent_config_vars: "{{ nr_java_agent_config_vars | combine({
+        'labels': '{{ tags_string }}'
+      })
+    }}"
+  when: tags_string is defined
 
 # This play requires the galaxy install for the newrelic java agent role: ansible-galaxy install newrelic.newrelic_java_agent
 - name: Install newrelic java agent
