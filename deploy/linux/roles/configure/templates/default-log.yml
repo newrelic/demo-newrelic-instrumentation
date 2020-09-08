@@ -1,0 +1,20 @@
+logs:
+  - name: "messages"
+    file: /var/log/messages
+    attributes:
+      service_name: messages
+
+  - name: "secure"
+    file: /var/log/secure
+    attributes:
+      service_name: secure
+
+  - name: "supervisord"
+    file: /var/log/supervisor/supervisord.log
+    attributes:
+      service_name: supervisord
+
+  - name: "cron"
+    file: /var/log/cron
+    attributes:
+      service_name: cron
