@@ -22,9 +22,6 @@
     msg: "account_id is required. Create this entry in your user config file"
   when: account_id is not defined
 - fail:
-    msg: "service_display_name is required. Define this in your deploy config file as a params key/value pair"
-  when: service_display_name is not defined
-- fail:
     msg: "alert_policy_name is required. Define this in your deploy config file as a params key/value pair"
   when: alert_policy_name is not defined
 
