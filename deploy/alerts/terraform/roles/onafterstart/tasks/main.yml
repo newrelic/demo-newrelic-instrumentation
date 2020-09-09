@@ -25,5 +25,23 @@
     msg: "alert_policy_name is required. Define this in your deploy config file as a params key/value pair"
   when: alert_policy_name is not defined
 
+- block:
+  - name: Creating terraform var file
+    set_fact:
+      tfvars_json: "{{ tfvars_json | combine({
+        'api_key': nr_api_key,
+        'admin_api_key': nr_admin_api_key,
+        'account_id': account_id,
+        'app_name': service_display_name,
+        'alert_policy_name': alert_policy_name
+        })
+      }}"
+
+  - name: "write terraform var to file {{playbook_dir}}/tfvars.json"
+    copy:
+      content: "{{ tfvars_json | to_nice_json }}"
+      dest: "{{ playbook_dir }}/tfvars.json"
+  delegate_to: localhost
+
 - fail:
     msg: "WIP stopping here for now"
