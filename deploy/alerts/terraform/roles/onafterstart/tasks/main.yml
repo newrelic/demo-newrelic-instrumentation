@@ -9,7 +9,7 @@
 #   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
 
 - debug:
-    msg: "Deploying alerts for {{ service_display_name }} using Terraform for policy {{ alert_policy_name }}"
+    msg: "Deploying alerts for {{ service_display_name }} using Terraform for Golden Signals policy"
 
 - fail:
     msg: "nr_api_key is required. Create this entry in your user config file"
