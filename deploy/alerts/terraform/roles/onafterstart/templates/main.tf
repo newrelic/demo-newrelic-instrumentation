@@ -1,3 +1,26 @@
+variable "service" {
+	description = "The service to create alerts for"
+	type = object({
+		duration                   = number
+		cpu_threshold              = number
+		response_time_threshold    = number
+		error_percentage_threshold = number
+		throughput_threshold       = number
+	})
+}
+variable "api_key" {
+  default = ""
+}
+variable "admin_api_key" {
+  default = ""
+}
+variable "account_id" {
+  default = ""
+}
+variable "app_name" {
+  default = ""
+}
+
 terraform {
   required_providers {
     newrelic = {

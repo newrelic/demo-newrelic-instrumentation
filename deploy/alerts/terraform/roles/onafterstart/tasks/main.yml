@@ -25,17 +25,17 @@
   - name: Creating terraform var file
     set_fact:
       tfvars_json: "{{ (tfvars_json|default({})) | combine({
+        'service': {
+          'duration': 5,
+          'response_time_threshold': 5,
+          'throughput_threshold': 1,
+          'error_percentage_threshold': 5,
+          'cpu_threshold': 90
+        },
         'api_key': nr_api_key,
         'admin_api_key': nr_admin_api_key,
         'account_id': account_id,
-        'app_name': service_display_name,
-        'service': {
-          'duration': 5,
-          'response_time_threshold': '5',
-          'throughput_threshold': '1',
-          'error_percentage_threshold': '5',
-          'cpu_threshold': '90'
-        }
+        'app_name': service_display_name
         })
       }}"
 
@@ -46,11 +46,14 @@
 
   - name: create infra config file
     template:
-      src: main.yml
-      dest: "{{ playbook_dir }}/main.yml"
+      src: main.tf
+      dest: "{{ playbook_dir }}/main.tf"
+
+  - name: "Initialize terraform"
+    shell: "terraform init"
 
   - name: "Execute terraform"
-    shell: "terraform apply -auto-approve -var-file={{ playbook_dir }}/tfvars.json -state={{ playbook_dir }}"
+    shell: "terraform apply -auto-approve -var-file={{ playbook_dir }}/tfvars.json"
 
   delegate_to: localhost
 
