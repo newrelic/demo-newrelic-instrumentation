@@ -1,0 +1,32 @@
+---
+
+# This play require the following variable set
+#   nr_api_key: "<from user config newrelic credential>"
+#   nr_admin_api_key: "<from user config newrelic credential>"
+#   account_id: "<from user config newrelic credential>"
+#   service_display_name: "The entity display_name to create alert for"
+#   alert_policy_name: "The policy name to use for the alert"
+# The fields below are optionals
+#   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
+
+- debug:
+    msg: "Deploying alerts for {{ service_display_name }} using Terraform for policy {{ alert_policy_name }}"
+
+- fail:
+    msg: "nr_api_key is required. Create this entry in your user config file"
+  when: nr_api_key is not defined
+- fail:
+    msg: "nr_admin_api_key is required. Create this entry in your user config file"
+  when: nr_admin_api_key is not defined
+- fail:
+    msg: "account_id is required. Create this entry in your user config file"
+  when: account_id is not defined
+- fail:
+    msg: "service_display_name is required. Define this in your deploy config file as a params key/value pair"
+  when: service_display_name is not defined
+- fail:
+    msg: "alert_policy_name is required. Define this in your deploy config file as a params key/value pair"
+  when: alert_policy_name is not defined
+
+- fail:
+    msg: "WIP stopping here for now"
