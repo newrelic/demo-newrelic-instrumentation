@@ -11,6 +11,28 @@ This repository is intended to be used by the [demo-deployer](https://github.com
 All the current and documented releases on this page are supported
 https://docs.newrelic.com/docs/release-notes/infrastructure-release-notes/infrastructure-agent-release-notes
 
+#### demo-deployer 'deploy_script_path'
+To instrument a NodeJS service use this path for the deploy script path
+
+      "deploy_script_path": "deploy/linux/roles"
+
+The `params` element `isLoggingEnabled` is optional and when set to `true` indicates the host system logs will be sent to newrelic logging.
+
+Here is a resource instrumentor configuration example to place in your demo-deployer deploy config file:
+```json
+      {
+            "id": "nr_infra_agent",
+            "resource_ids": ["host1"],
+            "provider": "newrelic",
+            "source_repository": "https://github.com/newrelic/demo-newrelic-instrumentation.git",
+            "deploy_script_path": "deploy/linux/roles",
+            "version": "1.12.4",
+            "params": {
+                  "isLoggingEnabled": true
+            }
+      }
+```
+
 ### demo-deployer
 
 #### User configuration
@@ -39,7 +61,6 @@ The schema below defines the possible configuration options for newrelic:
 
 Note, all URLs are optional by default.
 
-
 Typically, language agents only need the collector URL.
 The Infra agent needs the following URLs: infraCollector, infraCommand and identity.
 The Logging product needs the logging URL.
@@ -61,13 +82,13 @@ To instrument a NodeJS service use this path for the deploy script path
 
       "deploy_script_path": "deploy/node/linux/roles"
 
-Here is an instrumentor configuration example:
+Here is an instrumentor configuration example to place in your demo-deployer deploy config file:
 ```
  {
       "id": "nr_node_agent",
       "service_ids": ["simulator"],
       "provider": "newrelic",
-      "source_repository": "-b main https://github.com/newrelic/demo-newrelic-instrumentation.git",
+      "source_repository": "https://github.com/newrelic/demo-newrelic-instrumentation.git",
       "deploy_script_path": "deploy/node/linux/roles",
       "version": "6.2.0"
 },

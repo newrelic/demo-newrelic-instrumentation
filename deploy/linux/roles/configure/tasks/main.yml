@@ -1,5 +1,14 @@
 ---
 
+# This play require the following variable set
+#   license_key: "<license_key from credential>"
+# The following variables are optional
+#   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
+#   nr_infra_collector_url: defaults to US URL if not specified
+#   nr_infra_command_url: defaults to US URL if not specified
+#   nr_identity_url: defaults to US URL if not specified
+#   isLoggingEnabled: defaults to false if not specified. When true, will ship system logs to newrelic logging
+
 - fail:
     msg: "license_key is required for Configuring NewRelic Infrastructure Agent"
   when: license_key is not defined
@@ -43,3 +52,7 @@
     when: nr_identity_url is defined
 
   become: yes
+
+- include_tasks: installLogs.yml
+  when: isLoggingEnabled is defined and isLoggingEnabled == true
+

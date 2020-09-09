@@ -1,0 +1,8 @@
+---
+
+- block:
+  - name: configure logging of system files with infra agent
+    template:
+      src: default-log.yml
+      dest: /etc/newrelic-infra/logging.d/systemLogs.yml
+  become: yes
