@@ -28,7 +28,7 @@
 - block:
   - name: Creating terraform var file
     set_fact:
-      tfvars_json: "{{ tfvars_json | combine({
+      tfvars_json: "{{ (tfvars_json|default({})) | combine({
         'api_key': nr_api_key,
         'admin_api_key': nr_admin_api_key,
         'account_id': account_id,
