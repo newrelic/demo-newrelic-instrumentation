@@ -5,7 +5,6 @@
 #   nr_admin_api_key: "<from user config newrelic credential>"
 #   account_id: "<from user config newrelic credential>"
 #   service_display_name: "The entity display_name to create alert for"
-#   alert_policy_name: "The policy name to use for the alert"
 # The fields below are optionals
 #   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
 
@@ -21,9 +20,6 @@
 - fail:
     msg: "account_id is required. Create this entry in your user config file"
   when: account_id is not defined
-- fail:
-    msg: "alert_policy_name is required. Define this in your deploy config file as a params key/value pair"
-  when: alert_policy_name is not defined
 
 - block:
   - name: Creating terraform var file
@@ -33,7 +29,13 @@
         'admin_api_key': nr_admin_api_key,
         'account_id': account_id,
         'app_name': service_display_name,
-        'alert_policy_name': alert_policy_name
+        'service': {
+          'duration': 5,
+          'response_time_threshold': '5',
+          'throughput_threshold': '1',
+          'error_percentage_threshold': '5',
+          'cpu_threshold': '90'
+        }
         })
       }}"
 
@@ -41,7 +43,14 @@
     copy:
       content: "{{ tfvars_json | to_nice_json }}"
       dest: "{{ playbook_dir }}/tfvars.json"
+
+  - name: create infra config file
+    template:
+      src: main.yml
+      dest: "{{ playbook_dir }}/main.yml"
+
+  - name: "Execute terraform"
+    shell: "terraform apply -auto-approve -var-file={{ playbook_dir }}/tfvars.json -state={{ playbook_dir }}"
+
   delegate_to: localhost
 
-- fail:
-    msg: "WIP stopping here for now"
