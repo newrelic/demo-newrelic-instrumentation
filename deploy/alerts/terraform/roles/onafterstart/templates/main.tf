@@ -11,6 +11,7 @@ provider "newrelic" {
     api_key       = var.newrelic_api_key
     admin_api_key = var.newrelic_admin_api_key
     account_id    = var.newrelic_account_id
+    region        = var.newrelic_region
 }
 
 variable "service" {
@@ -33,6 +34,10 @@ variable "newrelic_admin_api_key" {
 }
 variable "newrelic_account_id" {
     description = "The New Relic AccountId"
+    type = string
+}
+variable "newrelic_region" {
+    description = "The New Relic region for the account, typically US"
     type = string
 }
 variable "app_name" {

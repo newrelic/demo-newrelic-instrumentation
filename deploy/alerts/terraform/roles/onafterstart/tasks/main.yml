@@ -4,6 +4,7 @@
 #   nr_api_key: "<from user config newrelic credential>"
 #   nr_admin_api_key: "<from user config newrelic credential>"
 #   account_id: "<from user config newrelic credential>"
+#   nr_region: "<from user config newrelic credential>"
 #   service_display_name: "The entity display_name to create alert for"
 # The fields below are optionals
 #   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
@@ -20,6 +21,9 @@
 - fail:
     msg: "account_id is required. Create this entry in your user config file"
   when: account_id is not defined
+- fail:
+    msg: "nr_region is required. Create this entry in your user config file"
+  when: nr_region is not defined
 
 - block:
   - name: Creating terraform var file
@@ -34,7 +38,8 @@
         },
         'newrelic_api_key': nr_api_key,
         'newrelic_admin_api_key': nr_admin_api_key,
-        'newrelic_account_id': account_id
+        'newrelic_account_id': account_id,
+        'newrelic_region': 'nr_region'
         })
       }}"
 
