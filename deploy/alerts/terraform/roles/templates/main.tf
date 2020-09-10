@@ -23,7 +23,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "{{ s3_bucketname_tfstate }}"
-    key    = "{{ deployment_name }}.tfstate"
+    key    = "{{ deployment_name }}-{{ service_id }}-alerts.tfstate"
     access_key  = "{{ api_key }}"
     secret_key  = "{{ secret_key }}"
     region      = "{{ region }}"

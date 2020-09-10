@@ -7,14 +7,13 @@
 #   nr_region: "<from user config newrelic credential>"
 #   service_display_name: "The entity display_name to create alert for"
 # The fields below are optionals
-#   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
 #   s3_bucketname_tfstate: "<an AWS S3 bucket name to use for the terraform state file>"
 #   api_key: the aws api key when an S3 bucket is used
 #   secret_key: the aws secret key when an S3 bucket is used
 #   region: the aws region key when an S3 bucket is used
 
 - debug:
-    msg: "Deploying alerts for {{ service_display_name }} using Terraform for Golden Signals policy"
+    msg: "Tearing down alerts for {{ service_display_name }} using Terraform for Golden Signals policy"
 
 - fail:
     msg: "nr_api_key is required. Create this entry in your user config file"
@@ -64,12 +63,16 @@
   - name: "Initialize terraform"
     shell: "terraform init"
 
-  - name: "Execute terraform apply"
-    shell: "terraform apply -auto-approve -var-file={{ playbook_dir }}/tfvars.json"
+  - name: "Execute terraform destroy"
+    shell: "terraform destroy -auto-approve -var-file={{ playbook_dir }}/tfvars.json"
     register: terraform_result
     retries: 8
     delay: 15
     until: terraform_result is not failed
 
+  when: s3_bucketname_tfstate is defined
   delegate_to: localhost
 
+- debug:
+    msg: "Terraform teardown is skipped, no S3 bucket name specified to lookup the terraform state file. If desired, please provide a params 's3_bucketname_tfstate': 'my_bucket_name' in your deploy config filename."
+  when: s3_bucketname_tfstate is NOT defined
