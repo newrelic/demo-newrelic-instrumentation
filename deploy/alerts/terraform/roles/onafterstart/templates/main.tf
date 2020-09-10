@@ -36,10 +36,8 @@ provider "newrelic" {
   account_id    = var.account_id
 }
 
-data "newrelic_entity" "application" {
+data "newrelic_application" "application" {
 	name = var.app_name
-	type = "APPLICATION"
-	domain = "APM"
 }
 
 resource "newrelic_alert_policy" "golden_signal_policy" {
@@ -51,14 +49,15 @@ resource "newrelic_alert_condition" "response_time_web" {
 
 	name            = "High Response Time (web)"
 	type            = "apm_app_metric"
-	entities        = [data.newrelic_entity.application.name]
+	entities        = [data.newrelic_application.application.name]
 	metric          = "response_time_web"
 	condition_scope = "application"
 
-	critical {
+	term {
 		duration      = var.service.duration
 		threshold     = var.service.response_time_threshold
 		operator      = "above"
+		priority      = "critical"
 		time_function = "all"
 	}
 }
@@ -68,14 +67,15 @@ resource "newrelic_alert_condition" "throughput_web" {
 
 	name            = "Low Throughput (web)"
 	type            = "apm_app_metric"
-	entities        = [data.newrelic_entity.application.name]
+	entities        = [data.newrelic_application.application.name]
 	metric          = "throughput_web"
 	condition_scope = "application"
 
-	critical {
+	term {
 		duration      = var.service.duration
 		threshold     = var.service.throughput_threshold
 		operator      = "below"
+		priority      = "critical"
 		time_function = "all"
 	}
 }
@@ -85,14 +85,15 @@ resource "newrelic_alert_condition" "error_percentage" {
 
 	name            = "High Error Percentage"
 	type            = "apm_app_metric"
-	entities        = [data.newrelic_entity.application.name]
+	entities        = [data.newrelic_application.application.name]
 	metric          = "error_percentage"
 	condition_scope = "application"
 
-	critical {
+	term {
 		duration      = var.service.duration
 		threshold     = var.service.error_percentage_threshold
 		operator      = "above"
+		priority      = "critical"
 		time_function = "all"
 	}
 }
@@ -105,7 +106,7 @@ resource "newrelic_infra_alert_condition" "high_cpu" {
 	event      = "SystemSample"
 	select     = "cpuPercent"
 	comparison = "above"
-	where      = "(`applicationId` = '${data.newrelic_entity.application.name}')"
+	where      = "(`applicationId` = '${data.newrelic_application.application.name}')"
 
 	critical {
 		duration      = var.service.duration
