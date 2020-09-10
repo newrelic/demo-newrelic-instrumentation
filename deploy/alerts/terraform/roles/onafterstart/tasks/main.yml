@@ -32,10 +32,9 @@
           'error_percentage_threshold': 5,
           'cpu_threshold': 90
         },
-        'api_key': nr_api_key,
-        'admin_api_key': nr_admin_api_key,
-        'account_id': account_id,
-        'app_name': service_display_name
+        'newrelic_api_key': nr_api_key,
+        'newrelic_admin_api_key': nr_admin_api_key,
+        'newrelic_account_id': account_id
         })
       }}"
 
