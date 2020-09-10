@@ -39,7 +39,7 @@
         'newrelic_api_key': nr_api_key,
         'newrelic_admin_api_key': nr_admin_api_key,
         'newrelic_account_id': account_id,
-        'newrelic_region': 'nr_region'
+        'newrelic_region': nr_region
         })
       }}"
 
