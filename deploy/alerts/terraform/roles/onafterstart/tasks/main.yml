@@ -27,7 +27,7 @@
   when: nr_region is not defined
 - fail:
     msg: "The S3 bucket name '{{ s3_bucketname_tfstate }}' requires the addition of 'provider_credential': 'aws' in your deploy config file to use the aws credentials to access the bucket."
-  when: s3_bucketname_tfstate is defined and access_key is not defined
+  when: s3_bucketname_tfstate is defined and secret_key is not defined
 
 - block:
   - name: Creating terraform var file
