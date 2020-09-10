@@ -58,7 +58,7 @@
 
   - name: create infra config file
     template:
-      src: ../../main.tf
+      src: ../../templates/main.tf
       dest: "{{ playbook_dir }}/main.tf"
 
   - name: "Initialize terraform"
