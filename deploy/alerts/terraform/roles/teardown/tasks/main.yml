@@ -75,4 +75,4 @@
 
 - debug:
     msg: "Terraform teardown is skipped, no S3 bucket name specified to lookup the terraform state file. If desired, please provide a params 's3_bucketname_tfstate': 'my_bucket_name' in your deploy config filename."
-  when: s3_bucketname_tfstate is NOT defined
+  when: s3_bucketname_tfstate is not defined
