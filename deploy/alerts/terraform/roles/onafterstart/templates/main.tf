@@ -14,6 +14,23 @@ provider "newrelic" {
     region        = var.newrelic_region
 }
 
+{% if s3_bucketname_tfstate is defined %}
+provider "aws" {
+  access_key  = "{{ access_key }}"
+  secret_key  = "{{ secret_key }}"
+  region      = "{{ region }}"
+}
+terraform {
+  backend "s3" {
+    bucket = "{{ s3_bucketname_tfstate }}"
+    key    = "{{ deployment_name }}.tfstate"
+    access_key  = "{{ access_key }}"
+    secret_key  = "{{ secret_key }}"
+    region      = "{{ region }}"
+  }
+}
+{% endif %}
+
 variable "service" {
     description = "The service to create alerts for"
     type = object({
