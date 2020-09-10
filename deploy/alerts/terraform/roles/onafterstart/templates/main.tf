@@ -59,7 +59,6 @@ resource "newrelic_alert_condition" "response_time_web" {
 		duration      = var.service.duration
 		threshold     = var.service.response_time_threshold
 		operator      = "above"
-    priority      = "critical"
 		time_function = "all"
 	}
 }
@@ -77,7 +76,6 @@ resource "newrelic_alert_condition" "throughput_web" {
 		duration      = var.service.duration
 		threshold     = var.service.throughput_threshold
 		operator      = "below"
-    priority      = "critical"
 		time_function = "all"
 	}
 }
@@ -95,7 +93,6 @@ resource "newrelic_alert_condition" "error_percentage" {
 		duration      = var.service.duration
 		threshold     = var.service.error_percentage_threshold
 		operator      = "above"
-    priority      = "critical"
 		time_function = "all"
 	}
 }
