@@ -40,18 +40,19 @@ variable "newrelic_region" {
     description = "The New Relic region for the account, typically US"
     type = string
 }
-variable "app_name" {
-    default = ""
+variable "name" {
+    description = "The application name to alert for"
+    type = string
 }
 
 data "newrelic_entity" "application" {
-    name = var.app_name
+    name = var.name
     domain = "APM"
     type = "APPLICATION"
 }
 
 resource "newrelic_alert_policy" "golden_signal_policy" {
-    name = "Golden Signals - ${var.app_name}"
+    name = "Golden Signals - ${var.name}"
 }
 
 resource "newrelic_alert_condition" "response_time_web" {

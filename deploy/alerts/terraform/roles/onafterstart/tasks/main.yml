@@ -29,6 +29,7 @@
   - name: Creating terraform var file
     set_fact:
       tfvars_json: "{{ (tfvars_json|default({})) | combine({
+        'name': service_display_name,
         'service': {
           'duration': 5,
           'response_time_threshold': 5,
