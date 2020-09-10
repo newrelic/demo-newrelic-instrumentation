@@ -59,6 +59,10 @@
 
   - name: "Execute terraform"
     shell: "terraform apply -auto-approve -var-file={{ playbook_dir }}/tfvars.json"
+    register: terraform_result
+    retries: 8
+    delay: 15
+    until: terraform_result is not failed
 
   delegate_to: localhost
 
