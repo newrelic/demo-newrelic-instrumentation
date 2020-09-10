@@ -16,7 +16,7 @@ provider "newrelic" {
 
 {% if s3_bucketname_tfstate is defined %}
 provider "aws" {
-  access_key  = "{{ access_key }}"
+  access_key  = "{{ api_key }}"
   secret_key  = "{{ secret_key }}"
   region      = "{{ region }}"
 }
@@ -24,7 +24,7 @@ terraform {
   backend "s3" {
     bucket = "{{ s3_bucketname_tfstate }}"
     key    = "{{ deployment_name }}.tfstate"
-    access_key  = "{{ access_key }}"
+    access_key  = "{{ api_key }}"
     secret_key  = "{{ secret_key }}"
     region      = "{{ region }}"
   }
