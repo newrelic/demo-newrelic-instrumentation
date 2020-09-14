@@ -140,7 +140,7 @@ This alert deployment creates an alert for a service `node1` with the 4 golden s
         "source_repository": "https://github.com/newrelic/demo-newrelic-instrumentation.git",
         "deploy_script_path": "deploy/alerts/terraform/roles",
         "params": {
-          "s3_bucketname_tfstate": "terraform-alert-[global:deployment_name]",
+          "s3_bucketname_tfstate": "terraform-alerts",
           "alert_duration": 5,
           "alert_response_time_threshold": 5,
           "alert_throughput_threshold": 10,
