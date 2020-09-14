@@ -1,7 +1,7 @@
 ---
 
 # This play require the following variable set
-#   nr_api_key: "<from user config newrelic credential>"
+#   nr_personal_api_key: "<from user config newrelic credential>"
 #   nr_admin_api_key: "<from user config newrelic credential>"
 #   account_id: "<from user config newrelic credential>"
 #   nr_region: "<from user config newrelic credential>"
@@ -16,8 +16,8 @@
     msg: "Tearing down alerts for {{ service_display_name }} using Terraform for Golden Signals policy"
 
 - fail:
-    msg: "nr_api_key is required. Create this entry in your user config file"
-  when: nr_api_key is not defined
+    msg: "nr_personal_api_key is required. Create this entry in your user config file"
+  when: nr_personal_api_key is not defined
 - fail:
     msg: "nr_admin_api_key is required. Create this entry in your user config file"
   when: nr_admin_api_key is not defined
@@ -43,7 +43,7 @@
           'error_percentage_threshold': 5,
           'cpu_threshold': 90
         },
-        'newrelic_api_key': nr_api_key,
+        'newrelic_api_key': nr_personal_api_key,
         'newrelic_admin_api_key': nr_admin_api_key,
         'newrelic_account_id': account_id,
         'newrelic_region': nr_region
