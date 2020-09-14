@@ -6,12 +6,18 @@
 #   account_id: "<from user config newrelic credential>"
 #   nr_region: "<from user config newrelic credential>"
 #   service_display_name: "The entity display_name to create alert for"
-# The fields below are optionals
-#   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
+# The fields below are optional and can be set through the deploy config params
 #   s3_bucketname_tfstate: "<an AWS S3 bucket name to use for the terraform state file>"
+#   alert_duration: the number of minutes for a condition before reacting
+#   alert_response_time_threshold: the maximum number of seconds for processing requests before alerting
+#   alert_throughput_threshold: the minimum number of requests per minutes before alerting
+#   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
+#   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
+# Other optional fields:
 #   api_key: the aws api key when an S3 bucket is used
 #   secret_key: the aws secret key when an S3 bucket is used
 #   region: the aws region key when an S3 bucket is used
+#   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
 
 - debug:
     msg: "Deploying alerts for {{ service_display_name }} using Terraform for Golden Signals policy"
