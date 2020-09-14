@@ -38,11 +38,11 @@
       tfvars_json: "{{ (tfvars_json|default({})) | combine({
         'name': service_display_name,
         'service': {
-          'duration': 5,
-          'response_time_threshold': 5,
-          'throughput_threshold': 1,
-          'error_percentage_threshold': 5,
-          'cpu_threshold': 90
+          'duration': alert_duration|5,
+          'response_time_threshold': alert_response_time_threshold|5,
+          'throughput_threshold': alert_throughput_threshold|1,
+          'error_percentage_threshold': alert_error_percentage_threshold|5,
+          'cpu_threshold': alert_cpu_threshold|90
         },
         'newrelic_api_key': nr_api_key,
         'newrelic_admin_api_key': nr_admin_api_key,
