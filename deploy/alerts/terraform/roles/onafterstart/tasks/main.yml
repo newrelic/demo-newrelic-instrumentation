@@ -32,17 +32,24 @@
     msg: "The S3 bucket name '{{ s3_bucketname_tfstate }}' requires the addition of 'provider_credential': 'aws' in your deploy config file to use the aws credentials to access the bucket."
   when: s3_bucketname_tfstate is defined and secret_key is not defined
 
+- set_fact:
+    duration: "{{ alert_duration | 5 }}",
+    response_time_threshold: "{{ alert_response_time_threshold | 5 }}",
+    throughput_threshold: "{{ alert_throughput_threshold | 1 }}",
+    error_percentage_threshold: "{{ alert_error_percentage_threshold | 5 }}",
+    cpu_threshold: "{{ alert_cpu_threshold | 90 }}"
+
 - block:
   - name: Creating terraform var file
     set_fact:
       tfvars_json: "{{ (tfvars_json|default({})) | combine({
         'name': service_display_name,
         'service': {
-          'duration': alert_duration|5,
-          'response_time_threshold': alert_response_time_threshold|5,
-          'throughput_threshold': alert_throughput_threshold|1,
-          'error_percentage_threshold': alert_error_percentage_threshold|5,
-          'cpu_threshold': alert_cpu_threshold|90
+          'duration': duration,
+          'response_time_threshold': response_time_threshold,
+          'throughput_threshold': throughput_threshold,
+          'error_percentage_threshold': error_percentage_threshold,
+          'cpu_threshold': cpu_threshold
         },
         'newrelic_api_key': nr_api_key,
         'newrelic_admin_api_key': nr_admin_api_key,
