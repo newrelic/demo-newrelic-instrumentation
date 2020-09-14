@@ -146,6 +146,30 @@ Similar to logging, there is also another specific play for instrumenting with L
 This instrumentation is dependent on the application to generate a log file in its directory named `application.log.json`
 For example if a service was being deployed with the demo-deployer with an id of "node1" on an AWS EC2 instance, the log file should be in the path /home/ec2-user/node1/application.log.json
 
+### Alerts
+
+Alerts can be created in newrelic through the use of the Terraform provider.
+Here is an example of demo [demo-deployer](https://github.com/newrelic/demo-deployer) configuration.
+This alert deployment creates an alert for a service `node1` with the 4 golden signals: Low Throughput, High Response Time, High CPU usage, High Error Percentage.
+
+```json
+      {
+        "id": "nr_alert_service",
+        "service_ids": ["node1"],
+        "provider": "newrelic",
+        "provider_credential": "aws",
+        "source_repository": "https://github.com/newrelic/demo-newrelic-instrumentation.git",
+        "deploy_script_path": "deploy/alerts/terraform/roles",
+        "params": {
+          "s3_bucketname_tfstate": "terraform-alert-[global:deployment_name]",
+          "alert_duration": 5,
+          "alert_response_time_threshold": 5,
+          "alert_throughput_threshold": 10,
+          "alert_error_percentage_threshold": 10,
+          "alert_cpu_threshold": 80
+        }
+```
+
 ## Contributing
 We encourage your contributions to improve demo-newrelic-instrumentation! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
 If you have any questions, or to execute our corporate CLA, required if your contribution is on behalf of a company, please drop us an email at opensource@newrelic.com.
