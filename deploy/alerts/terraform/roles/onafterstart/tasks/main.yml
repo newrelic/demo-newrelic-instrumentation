@@ -33,11 +33,11 @@
   when: s3_bucketname_tfstate is defined and secret_key is not defined
 
 - set_fact:
-    duration: "{{ alert_duration | 5 }}"
-    response_time_threshold: "{{ alert_response_time_threshold | 5 }}"
-    throughput_threshold: "{{ alert_throughput_threshold | 1 }}"
-    error_percentage_threshold: "{{ alert_error_percentage_threshold | 5 }}"
-    cpu_threshold: "{{ alert_cpu_threshold | 90 }}"
+    duration: "{{ alert_duration | default(5) }}"
+    response_time_threshold: "{{ alert_response_time_threshold | default(5) }}"
+    throughput_threshold: "{{ alert_throughput_threshold | default(1) }}"
+    error_percentage_threshold: "{{ alert_error_percentage_threshold | default(5) }}"
+    cpu_threshold: "{{ alert_cpu_threshold | default(90) }}"
 
 - block:
   - name: Creating terraform var file
