@@ -2,13 +2,15 @@
 
 ## This play require the following variable set
 ##   lambda_function_name: "name of lambda to be instrumented"
-##   region: ????
+##   aws_access_key: the aws access key
+##   aws_secret_key: the aws secret key
+##   aws_region: the aws region
 ##   with the new ones below
 
 
 - name: New Relic Log Ingestion lambda
   cloudformation:
-    region: "{{ region }}"
+    region: "{{ aws_region }}"
     state: "absent"
     aws_access_key: "{{ aws_access_key }}"
     aws_secret_key: "{{ aws_secret_key }}"

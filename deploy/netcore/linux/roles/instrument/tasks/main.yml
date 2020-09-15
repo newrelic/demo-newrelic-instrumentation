@@ -1,7 +1,7 @@
 ---
 
 # This play require the following variable set
-#   license_key: "<license_key from credential>"
+#   newrelic_license_key: "<newrelic_license_key from credential>"
 #   agent_version: "8.23.107"
 #   service_display_name: "My app1"
 #   remote_user: "ec2-user"
@@ -10,7 +10,7 @@
 
 - fail:
     msg: "A newrelic license key is required to instrument"
-  when: license_key is not defined
+  when: newrelic_license_key is not defined
 
 - fail:
     msg: "A newrelic agent_version is required to instrument"
@@ -64,19 +64,19 @@
   lineinfile:
     path: /usr/local/newrelic-netcore20-agent/newrelic.config
     insertbefore: '<application>'
-    line: "\t<service licenseKey=\"{{ license_key }}\" />"
+    line: "\t<service licenseKey=\"{{ newrelic_license_key }}\" />"
     state: present
   become: yes 
-  when: nr_collector_url is not defined
+  when: newrelic_collector_url is not defined
 
 - name: Add newrelic collector url with license key
   lineinfile:
     path: /usr/local/newrelic-netcore20-agent/newrelic.config
     insertbefore: '<application>'
-    line: "\t<service licenseKey=\"{{ license_key }}\" host=\"{{ nr_collector_url }}\" />"
+    line: "\t<service licenseKey=\"{{ newrelic_license_key }}\" host=\"{{ newrelic_collector_url }}\" />"
     state: present
   become: yes 
-  when: nr_collector_url is defined
+  when: newrelic_collector_url is defined
 
 - name: Remove prior distributed tracing configuration from .Net Core agent
   lineinfile: 

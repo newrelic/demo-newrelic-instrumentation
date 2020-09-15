@@ -16,17 +16,17 @@ provider "newrelic" {
 
 {% if s3_bucketname_tfstate is defined %}
 provider "aws" {
-  access_key  = "{{ api_key }}"
-  secret_key  = "{{ secret_key }}"
-  region      = "{{ region }}"
+  access_key  = "{{ aws_api_key }}"
+  secret_key  = "{{ aws_secret_key }}"
+  region      = "{{ aws_region }}"
 }
 terraform {
   backend "s3" {
     bucket = "{{ s3_bucketname_tfstate }}"
     key    = "{{ deployment_name }}-{{ service_id }}-alerts.tfstate"
-    access_key  = "{{ api_key }}"
-    secret_key  = "{{ secret_key }}"
-    region      = "{{ region }}"
+    access_key  = "{{ aws_api_key }}"
+    secret_key  = "{{ aws_secret_key }}"
+    region      = "{{ aws_region }}"
   }
 }
 {% endif %}
