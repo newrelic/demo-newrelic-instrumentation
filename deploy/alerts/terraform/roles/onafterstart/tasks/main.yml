@@ -14,7 +14,7 @@
 #   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
 #   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
 # Other optional fields:
-#   aws_api_key: the aws api key when an S3 bucket is used
+#   aws_access_key: the aws api key when an S3 bucket is used
 #   aws_secret_key: the aws secret key when an S3 bucket is used
 #   aws_region: the aws region key when an S3 bucket is used
 

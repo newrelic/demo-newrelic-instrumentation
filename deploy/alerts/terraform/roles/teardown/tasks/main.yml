@@ -8,7 +8,7 @@
 #   service_display_name: "The entity display_name to create alert for"
 # The fields below are optionals
 #   s3_bucketname_tfstate: "<an AWS S3 bucket name to use for the terraform state file>"
-#   aws_api_key: the aws api key when an S3 bucket is used
+#   aws_access_key: the aws api key when an S3 bucket is used
 #   aws_secret_key: the aws secret key when an S3 bucket is used
 #   aws_region: the aws region key when an S3 bucket is used
 
