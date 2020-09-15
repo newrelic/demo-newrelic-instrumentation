@@ -1,10 +1,10 @@
 ---
 
 # This play require the following variable set
-#   nr_personal_api_key: "<from user config newrelic credential>"
-#   nr_admin_api_key: "<from user config newrelic credential>"
-#   account_id: "<from user config newrelic credential>"
-#   nr_region: "<from user config newrelic credential>"
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   newrelic_admin_api_key: "<from user config newrelic credential>"
+#   newrelic_account_id: "<from user config newrelic credential>"
+#   newrelic_region: "<from user config newrelic credential>"
 #   service_display_name: "The entity display_name to create alert for"
 # The fields below are optional and can be set through the deploy config params
 #   s3_bucketname_tfstate: "<an AWS S3 bucket name to use for the terraform state file>"
@@ -14,28 +14,28 @@
 #   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
 #   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
 # Other optional fields:
-#   api_key: the aws api key when an S3 bucket is used
-#   secret_key: the aws secret key when an S3 bucket is used
-#   region: the aws region key when an S3 bucket is used
+#   aws_api_key: the aws api key when an S3 bucket is used
+#   aws_secret_key: the aws secret key when an S3 bucket is used
+#   aws_region: the aws region key when an S3 bucket is used
 
 - debug:
     msg: "Deploying alerts for {{ service_display_name }} using Terraform for Golden Signals policy"
 
 - fail:
-    msg: "nr_personal_api_key is required. Create this entry in your user config file"
-  when: nr_personal_api_key is not defined
+    msg: "newrelic_personal_api_key is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
 - fail:
-    msg: "nr_admin_api_key is required. Create this entry in your user config file"
-  when: nr_admin_api_key is not defined
+    msg: "newrelic_admin_api_key is required. Create this entry in your user config file"
+  when: newrelic_admin_api_key is not defined
 - fail:
-    msg: "account_id is required. Create this entry in your user config file"
-  when: account_id is not defined
+    msg: "newrelic_account_id is required. Create this entry in your user config file"
+  when: newrelic_account_id is not defined
 - fail:
-    msg: "nr_region is required. Create this entry in your user config file"
-  when: nr_region is not defined
+    msg: "newrelic_region is required. Create this entry in your user config file"
+  when: newrelic_region is not defined
 - fail:
     msg: "The S3 bucket name '{{ s3_bucketname_tfstate }}' requires the addition of 'provider_credential': 'aws' in your deploy config file to use the aws credentials to access the bucket."
-  when: s3_bucketname_tfstate is defined and secret_key is not defined
+  when: s3_bucketname_tfstate is defined and aws_secret_key is not defined
 
 - set_fact:
     duration: "{{ alert_duration | default(5) }}"
@@ -56,10 +56,10 @@
           'error_percentage_threshold': error_percentage_threshold,
           'cpu_threshold': cpu_threshold
         },
-        'newrelic_api_key': nr_personal_api_key,
-        'newrelic_admin_api_key': nr_admin_api_key,
-        'newrelic_account_id': account_id,
-        'newrelic_region': nr_region
+        'newrelic_api_key': newrelic_personal_api_key,
+        'newrelic_admin_api_key': newrelic_admin_api_key,
+        'newrelic_account_id': newrelic_account_id,
+        'newrelic_region': newrelic_region
         })
       }}"
 

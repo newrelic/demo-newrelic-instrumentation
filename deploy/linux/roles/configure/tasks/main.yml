@@ -10,8 +10,8 @@
 #   isLoggingEnabled: defaults to false if not specified. When true, will ship system logs to newrelic logging
 
 - fail:
-    msg: "license_key is required for Configuring NewRelic Infrastructure Agent"
-  when: license_key is not defined
+    msg: "newrelic_license_key is required for Configuring NewRelic Infrastructure Agent"
+  when: newrelic_license_key is not defined
 
 - debug:
     msg: Configuring NR Infrastructure agent
@@ -33,23 +33,23 @@
   - name: Add newrelic infra collector url for infrastructure
     lineinfile:
       path: "/etc/newrelic-infra.yml"
-      line: "collector_url: {{ nr_infra_collector_url }}"
+      line: "collector_url: {{ newrelic_infra_collector_url }}"
       insertafter: 'license_key:'
-    when: nr_infra_collector_url is defined
+    when: newrelic_infra_collector_url is defined
 
   - name: Add newrelic infra command url for infrastructure
     lineinfile:
       path: "/etc/newrelic-infra.yml"
-      line: "command_channel_url: {{ nr_infra_command_url }}"
+      line: "command_channel_url: {{ newrelic_infra_command_url }}"
       insertafter: 'license_key:'
-    when: nr_infra_command_url is defined
+    when: newrelic_infra_command_url is defined
 
   - name: Add newrelic identity url for infrastructure
     lineinfile:
       path: "/etc/newrelic-infra.yml"
-      line: "identity_url: {{ nr_identity_url }}"
+      line: "identity_url: {{ newrelic_identity_url }}"
       insertafter: 'license_key:'
-    when: nr_identity_url is defined
+    when: newrelic_identity_url is defined
 
   become: yes
 

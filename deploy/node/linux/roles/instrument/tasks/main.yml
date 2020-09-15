@@ -1,13 +1,13 @@
 ---
 
 # This play require the following variable set
-#   license_key: "<license_key from credential>"
+#   newrelic_license_key: "<newrelic_license_key from credential>"
 #   with the new ones below
 #   agent_version: "6.2.0"
 #   service_display_name: "My app1"
 #   remote_user: "vm-user"
 #   service_id: "app1"
-#   nr_collector_url: "collector.newrelic.com" or other allowed url for collecting agent data
+#   newrelic_collector_url: "collector.newrelic.com" or other allowed url for collecting agent data
 
 - name: Find package.json files
   find:
@@ -65,14 +65,14 @@
 - name: Add newrelic collector url
   lineinfile:
     path: "{{package_file | dirname}}/newrelic.js"
-    line: "host: '{{ nr_collector_url }}',"
+    line: "host: '{{ newrelic_collector_url }}',"
     insertafter: 'license key here'
-  when: nr_collector_url is defined
+  when: newrelic_collector_url is defined
 
 - replace:
     dest: "{{package_file | dirname}}/newrelic.js"
     regexp: 'license key here'
-    replace: '{{ license_key }}'
+    replace: '{{ newrelic_license_key }}'
 
 - name: Find if DT is defaulted
   lineinfile:

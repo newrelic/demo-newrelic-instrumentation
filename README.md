@@ -37,29 +37,9 @@ Here is a resource instrumentor configuration example to place in your demo-depl
 
 #### User configuration
 
-The schema below defines the possible configuration options for newrelic:
+The current configuration for the demo-deployer is available at https://github.com/newrelic/demo-deployer/tree/main/documentation/user_config/credentials/newrelic
 
-```json
-{
-    "newrelic": {
-      "licenseKey": "YOUR_NR_LICENSE_KEY",
-      "insightsInsertApiKey": "NR_INSIGHTS_INSERT_API_KEY",
-      "accountId": "ACCOUNT_ID",
-      "accountRootId": "ROOT ACOUNT_ID",
-      "urls":{
-        "collector": "NR_COLLECTOR_URL",
-        "api": "NR_API_URL",
-        "infraCollector": "NR_INFRA_COLLECTOR_URL",
-        "infraCommand": "NR_INFRA_COMMAND_URL",
-        "identity": "NR_IDENTITY_URL",
-        "logging": "NR_LOGGING_URL",
-        "cloudCollector": "NR_CLOUD_COLLECTOR_URL"
-      }
-    }
-}
-```
-
-Note, all URLs are optional by default.
+Note, all URLs are optional by default. 
 
 Typically, language agents only need the collector URL.
 The Infra agent needs the following URLs: infraCollector, infraCommand and identity.

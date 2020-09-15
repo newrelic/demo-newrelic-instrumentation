@@ -11,12 +11,12 @@
   when: stderr_path is not defined
 
 - fail:
-    msg: "insights_insert_api_key is required"
-  when: insights_insert_api_key is not defined
+    msg: "newrelic_insights_insert_api_key is required"
+  when: newrelic_insights_insert_api_key is not defined
 
 - fail:
-    msg: "insights_insert_api_key should not be empty"
-  when: insights_insert_api_key == ""
+    msg: "newrelic_insights_insert_api_key should not be empty"
+  when: newrelic_insights_insert_api_key == ""
 # ansible bug, comparison to empty string dont work, waiting on https://github.com/ansible/ansible/pull/62602 to be released
 
 - name: Configure td-agent for sending log to NR Logging product
@@ -26,10 +26,10 @@
     block: |
       <match **>
         @type newrelic
-        api_key {{ insights_insert_api_key }}
+        api_key {{ newrelic_insights_insert_api_key }}
       </match>
   become: yes
-  when: nr_logging_url is not defined
+  when: newrelic_logging_url is not defined
 
 - name: Configure td-agent to send logs on specific NR URL
   blockinfile:
@@ -38,11 +38,11 @@
     block: |
       <match **>
         @type newrelic
-        api_key {{ insights_insert_api_key }}
-        base_uri {{ nr_logging_url }}
+        api_key {{ newrelic_insights_insert_api_key }}
+        base_uri {{ newrelic_logging_url }}
       </match>
   become: yes
-  when: nr_logging_url is defined
+  when: newrelic_logging_url is defined
 
 - name: Configure td-agent flush frequency
   blockinfile:

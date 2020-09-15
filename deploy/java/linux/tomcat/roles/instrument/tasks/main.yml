@@ -1,13 +1,13 @@
 ---
 
 # This play require the following variable set
-#   license_key: "<license_key from credential>"
+#   newrelic_license_key: "<newrelic_license_key from credential>"
 #   with the new ones below
 #   agent_version: "5.12.0"
 #   service_display_name: "My app1"
 #   remote_user: "vm-user" or "ec2-user"
 #   service_id: "app1"
-#   nr_collector_url: (optional) "collector.newrelic.com" or other allowed url for collecting agent data
+#   newrelic_collector_url: (optional) "collector.newrelic.com" or other allowed url for collecting agent data
 #   tags: {"dxOwningTeam":"DemoX","dxEnvironment":"development",...} JSON list of tags
 
 - debug:
@@ -16,7 +16,7 @@
 - name: Init the java agent config
   set_fact:
     nr_java_agent_config_vars: "{{ (nr_java_agent_config_vars|default({})) | combine({
-      'license_key': '{{ license_key }}',
+      'license_key': '{{ newrelic_license_key }}',
       'app_name': '{{ service_display_name }}',
       'distributed_tracing': {
         'enabled': true
@@ -26,10 +26,10 @@
 
 - set_fact:
     nr_java_agent_config_vars: "{{ nr_java_agent_config_vars | combine({
-        'collector_host': '{{ nr_collector_url }}'
+        'collector_host': '{{ newrelic_collector_url }}'
       })
     }}"
-  when: nr_collector_url is defined
+  when: newrelic_collector_url is defined
 
 - name: Format tags into a list
   set_fact:

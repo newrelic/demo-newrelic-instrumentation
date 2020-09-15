@@ -1,7 +1,7 @@
 ---
 
 # This play require the following variable set
-#   license_key: "<license_key from credential>"
+#   newrelic_license_key: "<newrelic_license_key from credential>"
 #   with the new ones below
 #   agent_version: "5.0.2.126"
 #   service_display_name: "My app1"
@@ -17,7 +17,7 @@
   command: "{{ python3_path.stdout }} -m pip install newrelic=={{ agent_version }} --user"
 
 - name: Generate newrelic.ini configuration file
-  command: "~/.local/bin/newrelic-admin generate-config {{ license_key }} newrelic.ini"
+  command: "~/.local/bin/newrelic-admin generate-config {{ newrelic_license_key }} newrelic.ini"
   args:
     chdir: "/home/{{ remote_user }}/{{ service_id }}"
 
@@ -53,8 +53,8 @@
   lineinfile:
     path: "/home/{{ remote_user }}/{{ service_id }}/newrelic.ini"
     insertafter: '^license_key'
-    line: host = {{ nr_collector_url }}
-  when: nr_collector_url is defined
+    line: host = {{ newrelic_collector_url }}
+  when: newrelic_collector_url is defined
 
 - name: Find python app entrypoint
   find:
