@@ -39,7 +39,7 @@
   delegate_to: localhost
   register: s3_buckets_result
 - set_fact:
-    query: "buckets[? name == {{ s3_bucketname_tfstate }}]"
+    query: "buckets[? name == `{{ s3_bucketname_tfstate }}`]"
 - set_fact:
     bucket_found: "{{ (s3_buckets_result|default({})) | json_query(query) }}"
 
