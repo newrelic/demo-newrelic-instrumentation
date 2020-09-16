@@ -31,6 +31,18 @@
     msg: "The S3 bucket name '{{ s3_bucketname_tfstate }}' requires the addition of 'provider_credential': 'aws' in your deploy config file to use the aws credentials to access the bucket."
   when: s3_bucketname_tfstate is defined and aws_secret_key is not defined
 
+- aws_s3_bucket_info:
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+    region: "{{aws_region}}"
+  ignore_errors: yes
+  delegate_to: localhost
+  register: s3_buckets_result
+- set_fact:
+    query: "buckets[? name == {{ s3_bucketname_tfstate }}]"
+- set_fact:
+    bucket_found: "{{ (s3_buckets_result|default({})) | json_query(query) }}"
+
 - block:
   - name: Creating terraform var file
     set_fact:
@@ -71,7 +83,13 @@
     until: terraform_result is not failed
 
   when: s3_bucketname_tfstate is defined
+  when: bucket_found is defined and bucket_found != ""
   delegate_to: localhost
+
+- debug:
+    msg: "An S3 bucket with name '{{ s3_bucketname_tfstate }}' was specified, however this bucket doesn't exist. Skipping teardown of alerts."
+  when: s3_bucketname_tfstate is defined
+  when: bucket_found is defined and bucket_found == ""
 
 - debug:
     msg: "Terraform teardown is skipped, no S3 bucket name specified to lookup the terraform state file. If desired, please provide a params 's3_bucketname_tfstate': 'my_bucket_name' in your deploy config filename."
