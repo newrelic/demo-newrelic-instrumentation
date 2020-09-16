@@ -22,16 +22,16 @@
     msg: "Deploying alerts for {{ service_display_name }} using Terraform for Golden Signals policy"
 
 - fail:
-    msg: "newrelic_personal_api_key is required. Create this entry in your user config file"
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
   when: newrelic_personal_api_key is not defined
 - fail:
-    msg: "newrelic_admin_api_key is required. Create this entry in your user config file"
+    msg: "A newrelic nrAdminApiKey is required. Create this entry in your user config file"
   when: newrelic_admin_api_key is not defined
 - fail:
-    msg: "newrelic_account_id is required. Create this entry in your user config file"
+    msg: "A newrelic accountId is required. Create this entry in your user config file"
   when: newrelic_account_id is not defined
 - fail:
-    msg: "newrelic_region is required. Create this entry in your user config file"
+    msg: "A newrelic nrRegion is required. Create this entry in your user config file"
   when: newrelic_region is not defined
 - fail:
     msg: "The S3 bucket name '{{ s3_bucketname_tfstate }}' requires the addition of 'provider_credential': 'aws' in your deploy config file to use the aws credentials to access the bucket."
