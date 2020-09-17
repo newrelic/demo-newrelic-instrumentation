@@ -1,0 +1,87 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   newrelic_admin_api_key: "<from user config newrelic credential>"
+#   newrelic_account_id: "<from user config newrelic credential>"
+#   newrelic_region: "<from user config newrelic credential>"
+#   service_display_name: "The entity display_name to create alert for"
+# The fields below are optional and can be set through the deploy config params
+#   s3_bucketname_tfstate: "<an AWS S3 bucket name to use for the terraform state file>"
+#   alert_duration: the number of minutes for a condition before reacting
+#   alert_response_time_threshold: the maximum number of seconds for processing requests before alerting
+#   alert_throughput_threshold: the minimum number of requests per minutes before alerting
+#   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
+#   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
+# Other optional fields:
+#   aws_access_key: the aws api key when an S3 bucket is used
+#   aws_secret_key: the aws secret key when an S3 bucket is used
+#   aws_region: the aws region key when an S3 bucket is used
+
+- debug:
+    msg: "Deploying alerts for {{ service_display_name }} using Terraform for Golden Signals policy"
+
+- fail:
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+- fail:
+    msg: "A newrelic nrAdminApiKey is required. Create this entry in your user config file"
+  when: newrelic_admin_api_key is not defined
+- fail:
+    msg: "A newrelic accountId is required. Create this entry in your user config file"
+  when: newrelic_account_id is not defined
+- fail:
+    msg: "A newrelic nrRegion is required. Create this entry in your user config file"
+  when: newrelic_region is not defined
+- fail:
+    msg: "The S3 bucket name '{{ s3_bucketname_tfstate }}' requires the addition of 'provider_credential': 'aws' in your deploy config file to use the aws credentials to access the bucket."
+  when: s3_bucketname_tfstate is defined and aws_secret_key is not defined
+
+- set_fact:
+    duration: "{{ alert_duration | default(5) }}"
+    response_time_threshold: "{{ alert_response_time_threshold | default(5) }}"
+    throughput_threshold: "{{ alert_throughput_threshold | default(1) }}"
+    error_percentage_threshold: "{{ alert_error_percentage_threshold | default(5) }}"
+    cpu_threshold: "{{ alert_cpu_threshold | default(90) }}"
+
+- block:
+  - name: Creating terraform var file
+    set_fact:
+      tfvars_json: "{{ (tfvars_json|default({})) | combine({
+        'name': service_display_name,
+        'service': {
+          'duration': duration,
+          'response_time_threshold': response_time_threshold,
+          'throughput_threshold': throughput_threshold,
+          'error_percentage_threshold': error_percentage_threshold,
+          'cpu_threshold': cpu_threshold
+        },
+        'newrelic_api_key': newrelic_personal_api_key,
+        'newrelic_admin_api_key': newrelic_admin_api_key,
+        'newrelic_account_id': newrelic_account_id,
+        'newrelic_region': newrelic_region
+        })
+      }}"
+
+  - name: "write terraform var to file {{playbook_dir}}/tfvars.json"
+    copy:
+      content: "{{ tfvars_json | to_nice_json }}"
+      dest: "{{ playbook_dir }}/tfvars.json"
+
+  - name: create infra config file
+    template:
+      src: ../../templates/main.tf
+      dest: "{{ playbook_dir }}/main.tf"
+
+  - name: "Initialize terraform"
+    shell: "terraform init"
+
+  - name: "Execute terraform apply"
+    shell: "terraform apply -auto-approve -var-file={{ playbook_dir }}/tfvars.json"
+    register: terraform_result
+    retries: 8
+    delay: 15
+    until: terraform_result is not failed
+
+  delegate_to: localhost
+

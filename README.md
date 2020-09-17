@@ -37,29 +37,9 @@ Here is a resource instrumentor configuration example to place in your demo-depl
 
 #### User configuration
 
-The schema below defines the possible configuration options for newrelic:
+The current configuration for the demo-deployer is available at https://github.com/newrelic/demo-deployer/tree/main/documentation/user_config/credentials/newrelic
 
-```json
-{
-    "newrelic": {
-      "licenseKey": "YOUR_NR_LICENSE_KEY",
-      "insightsInsertApiKey": "NR_INSIGHTS_INSERT_API_KEY",
-      "accountId": "ACCOUNT_ID",
-      "accountRootId": "ROOT ACOUNT_ID",
-      "urls":{
-        "collector": "NR_COLLECTOR_URL",
-        "api": "NR_API_URL",
-        "infraCollector": "NR_INFRA_COLLECTOR_URL",
-        "infraCommand": "NR_INFRA_COMMAND_URL",
-        "identity": "NR_IDENTITY_URL",
-        "logging": "NR_LOGGING_URL",
-        "cloudCollector": "NR_CLOUD_COLLECTOR_URL"
-      }
-    }
-}
-```
-
-Note, all URLs are optional by default.
+Note, all URLs are optional by default. 
 
 Typically, language agents only need the collector URL.
 The Infra agent needs the following URLs: infraCollector, infraCommand and identity.
@@ -145,6 +125,31 @@ Similar to logging, there is also another specific play for instrumenting with L
 
 This instrumentation is dependent on the application to generate a log file in its directory named `application.log.json`
 For example if a service was being deployed with the demo-deployer with an id of "node1" on an AWS EC2 instance, the log file should be in the path /home/ec2-user/node1/application.log.json
+
+### Alerts
+
+Alerts can be created in newrelic through the use of the Terraform provider.
+Here is an example of demo [demo-deployer](https://github.com/newrelic/demo-deployer) configuration.
+This alert deployment creates an alert for a service `node1` with the 4 golden signals: Low Throughput, High Response Time, High CPU usage, High Error Percentage.
+Optionally, you may also provisioned an S3 bucket with the deployer. If you do, beware that tearing down will remove that bucket, without a prompt or confirmation, and potentially impact anyone else who may be using that same bucket.
+
+```json
+      {
+        "id": "nr_alert_service",
+        "service_ids": ["node1"],
+        "provider": "newrelic",
+        "provider_credential": "aws",
+        "source_repository": "https://github.com/newrelic/demo-newrelic-instrumentation.git",
+        "deploy_script_path": "deploy/alerts/terraform/roles",
+        "params": {
+          "s3_bucketname_tfstate": "terraform-alerts",
+          "alert_duration": 5,
+          "alert_response_time_threshold": 5,
+          "alert_throughput_threshold": 10,
+          "alert_error_percentage_threshold": 10,
+          "alert_cpu_threshold": 80
+        }
+```
 
 ## Contributing
 We encourage your contributions to improve demo-newrelic-instrumentation! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
