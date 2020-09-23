@@ -13,6 +13,16 @@
 - debug:
     msg: "Installing newrelic java agent using ansible-galaxy extension. Make sure this has been run before executing this play: ansible-galaxy install newrelic.newrelic_java_agent"
 
+- name: "Installing packages"
+  yum:
+    name: "{{ packages }}"
+    state: installed
+  vars:
+    packages:
+    - zip
+    - unzip
+  become: yes
+
 - name: Init the java agent config
   set_fact:
     nr_java_agent_config_vars: "{{ (nr_java_agent_config_vars|default({})) | combine({
