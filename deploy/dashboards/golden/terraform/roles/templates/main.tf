@@ -50,7 +50,7 @@ variable "newrelic_region" {
 }
 
 resource "newrelic_dashboard" "golden_dashboard" {
-  title             = Golden {{ deployment_name }}"
+  title             = "Golden {{ deployment_name }}"
   icon              = "line-chart"
   grid_column_count = 12
   visibility        = "all"
