@@ -62,6 +62,8 @@ resource "newrelic_dashboard" "golden_dashboard" {
     nrql          = "SELECT count(*) FROM Transaction FACET appName WHERE httpResponseCode = '500' AND tags.dxDeploymentName = '{{ deployment_name }}'"
     row           = 1
     column        = 1
+    width         = 4
+    height        = 3
   }
 
   widget {
@@ -69,7 +71,9 @@ resource "newrelic_dashboard" "golden_dashboard" {
     visualization = "facet_pie_chart"
     nrql          = "SELECT average(duration) FROM Transaction FACET appName, name WHERE tags.dxDeploymentName = '{{ deployment_name }}'"
     row           = 1
-    column        = 2
+    column        = 5
+    width         = 4
+    height        = 3
   }
 
   widget {
@@ -77,31 +81,39 @@ resource "newrelic_dashboard" "golden_dashboard" {
     visualization = "facet_pie_chart"
     nrql          = "SELECT count(*) FROM Transaction FACET appName LIMIT MAX WHERE tags.dxDeploymentName = '{{ deployment_name }}'"
     row           = 1
-    column        = 3
+    column        = 9
+    width         = 4
+    height        = 3
   }
 
   widget {
     title         = "Host Memory Usage (percentage)"
     visualization = "faceted_line_chart"
     nrql          = "SELECT average(memoryUsedPercent) as '% Used' FROM SystemSample TIMESERIES FACET entityName WHERE dxDeploymentName = '{{ deployment_name }}'"
-    row           = 2
+    row           = 4
     column        = 1
+    width         = 4
+    height        = 3
   }
 
   widget {
     title         = "HTTP Responses"
     visualization = "faceted_area_chart"
     nrql          = "SELECT count(*) FROM Transaction TIMESERIES FACET httpResponseCode WHERE tags.dxDeploymentName = '{{ deployment_name }}'"
-    row           = 2
-    column        = 2
+    row           = 4
+    column        = 5
+    width         = 4
+    height        = 3
   }
 
   widget {
     title         = "Heap Memory Used (percentage)"
     visualization = "faceted_line_chart"
     nrql          = "SELECT average(`apm.service.memory.heap.used`)/average(`apm.service.memory.heap.max`)*100 FROM Metric FACET appName WHERE tags.dxDeploymentName = '{{ deployment_name }}'"
-    row           = 2
-    column        = 3
+    row           = 4
+    column        = 9
+    width         = 4
+    height        = 3
   }
 
 }
