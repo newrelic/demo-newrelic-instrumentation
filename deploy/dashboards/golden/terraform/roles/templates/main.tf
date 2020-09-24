@@ -59,7 +59,7 @@ resource "newrelic_dashboard" "golden_dashboard" {
   widget {
     title         = "Errors"
     visualization = "billboard"
-    nrql          = "SELECT count(*) FROM Transaction FACET appName WHERE httpResponseCode = '500' AND appName IN ('Telco-Web Portal')"
+    nrql          = "SELECT count(*) FROM Transaction FACET appName WHERE httpResponseCode = '500' AND tags.dxDeploymentName = '{{ deployment_name }}'"
     row           = 1
     column        = 1
   }
@@ -67,7 +67,7 @@ resource "newrelic_dashboard" "golden_dashboard" {
   widget {
     title         = "Slowest Endpoints (95th percentile)"
     visualization = "facet_pie_chart"
-    nrql          = "SELECT average(duration) FROM Transaction FACET appName, name WHERE appName IN ('Telco-Web Portal')"
+    nrql          = "SELECT average(duration) FROM Transaction FACET appName, name WHERE tags.dxDeploymentName = '{{ deployment_name }}'"
     row           = 1
     column        = 2
   }
@@ -75,7 +75,7 @@ resource "newrelic_dashboard" "golden_dashboard" {
   widget {
     title         = "Request Breakdown by Application"
     visualization = "facet_pie_chart"
-    nrql          = "SELECT count(*) FROM Transaction FACET appName LIMIT MAX Where appName IN ('Telco-Web Portal')"
+    nrql          = "SELECT count(*) FROM Transaction FACET appName LIMIT MAX WHERE tags.dxDeploymentName = '{{ deployment_name }}'"
     row           = 1
     column        = 3
   }
@@ -83,7 +83,7 @@ resource "newrelic_dashboard" "golden_dashboard" {
   widget {
     title         = "Host Memory Usage (percentage)"
     visualization = "faceted_line_chart"
-    nrql          = "SELECT average(memoryUsedPercent) as '% Used' FROM SystemSample TIMESERIES FACET entityName WHERE entityName IN ('simuhost')"
+    nrql          = "SELECT average(memoryUsedPercent) as '% Used' FROM SystemSample TIMESERIES FACET entityName WHERE dxDeploymentName = '{{ deployment_name }}'"
     row           = 2
     column        = 1
   }
@@ -91,7 +91,7 @@ resource "newrelic_dashboard" "golden_dashboard" {
   widget {
     title         = "HTTP Responses"
     visualization = "faceted_area_chart"
-    nrql          = "SELECT count(*) FROM Transaction TIMESERIES FACET httpResponseCode WHERE appName IN ('Telco-Web Portal')"
+    nrql          = "SELECT count(*) FROM Transaction TIMESERIES FACET httpResponseCode WHERE tags.dxDeploymentName = '{{ deployment_name }}'"
     row           = 2
     column        = 2
   }
@@ -99,7 +99,7 @@ resource "newrelic_dashboard" "golden_dashboard" {
   widget {
     title         = "Heap Memory Used (percentage)"
     visualization = "faceted_line_chart"
-    nrql          = "SELECT average(`apm.service.memory.heap.used`)/average(`apm.service.memory.heap.max`)*100 FROM Metric FACET appName WHERE appName IN ('Telco-Web Portal')"
+    nrql          = "SELECT average(`apm.service.memory.heap.used`)/average(`apm.service.memory.heap.max`)*100 FROM Metric FACET appName WHERE tags.dxDeploymentName = '{{ deployment_name }}'"
     row           = 2
     column        = 3
   }
