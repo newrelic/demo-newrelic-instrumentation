@@ -116,15 +116,54 @@ The below play is meant to be use with the installation of the Fluentd applicati
 Then add a service instrumentation with the below script path to ensure the logs are sent to NR.
 Please see the [demo-deployer](https://github.com/newrelic/demo-deployer) documentation for the setup of the NR api keys.
 
+```json
+{
+
+  "instrumentations": {
+    "services": [
+      {
+        "id": "nr_logging",
+        "service_ids": ["service1"],
+        "provider": "newrelic",
+        "source_repository": "https://github.com/newrelic/demo-newrelic-instrumentation.git",
         "deploy_script_path": "deploy/logging/roles"
+      }
+    ]
+  }
+
+}
+```
+
+This instrumentation is dependent on the application to generate a log file in its directory named `application.log.json`
+For example if a service was being deployed with the demo-deployer with an id of "node1" on an AWS EC2 instance, the log file should be in the path /home/ec2-user/node1/application.log.json
+
+Note, Logging requires a service to ship the log files to newrelic. You can do so with the [demo-fluentd](https://github.com/newrelic/demo-fluentd) repository.
 
 #### Logging in Context
 Similar to logging, there is also another specific play for instrumenting with Logging in Context.
 
+```json
+{
+
+  "instrumentations": {
+    "services": [
+      {
+        "id": "nr_logging_in_context",
+        "service_ids": ["service2"],
+        "provider": "newrelic",
+        "source_repository": "https://github.com/newrelic/demo-newrelic-instrumentation.git",
         "deploy_script_path": "deploy/logging_in_context/roles"
+      }
+    ]
+  }
+
+}
+```
 
 This instrumentation is dependent on the application to generate a log file in its directory named `application.log.json`
 For example if a service was being deployed with the demo-deployer with an id of "node1" on an AWS EC2 instance, the log file should be in the path /home/ec2-user/node1/application.log.json
+
+Note, Logging requires a service to ship the log files to newrelic. You can do so with the [demo-fluentd](https://github.com/newrelic/demo-fluentd) repository.
 
 ### Alerts
 
