@@ -113,7 +113,7 @@ resource "newrelic_dashboard" "golden_dashboard" {
   widget {
     title         = "Heap Memory Used (percentage)"
     visualization = "faceted_line_chart"
-    nrql          = "SELECT average(`apm.service.memory.heap.used`)/average(`apm.service.memory.heap.max`)*100 FROM Metric FACET appName WHERE tags.dxDeploymentName = '${var.deployment_name}'"
+    nrql          = "SELECT average(`apm.service.memory.heap.used`)/average(`apm.service.memory.heap.max`)*100 FROM Metric FACET appName TIMESERIES WHERE tags.dxDeploymentName = '${var.deployment_name}'"
     row           = 4
     column        = 9
     width         = 4
