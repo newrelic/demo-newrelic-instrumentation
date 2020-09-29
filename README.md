@@ -128,7 +128,7 @@ For example if a service was being deployed with the demo-deployer with an id of
 
 ### Alerts
 
-Alerts can be created in newrelic through the use of the Terraform provider.
+Alerts can be created in New Relic through the use of the Terraform provider.
 Here is an example of demo [demo-deployer](https://github.com/newrelic/demo-deployer) configuration.
 This alert deployment creates an alert for a service `node1` with the 4 golden signals: Low Throughput, High Response Time, High CPU usage, High Error Percentage.
 Optionally, you may also provisioned an S3 bucket with the deployer. If you do, beware that tearing down will remove that bucket, without a prompt or confirmation, and potentially impact anyone else who may be using that same bucket.
@@ -149,6 +149,27 @@ Optionally, you may also provisioned an S3 bucket with the deployer. If you do, 
           "alert_error_percentage_threshold": 10,
           "alert_cpu_threshold": 80
         }
+      }
+```
+
+### Dashboards
+
+Dashboards can be created in New Relic through the use of the Terraform provider.
+Here is an example of the demo [demo-deployer](https://github.com/newrelic/demo-deployer) configuration.
+This dashboard deployment creates a dashboard with 6 visualizations on it: Errors, Slowest Endpoints, Request Breakdown by Application, Host Memory Usage, HTTP Responses, and Heap Memory Used.
+Similar to Alerts, you may also provision an S3 bucket with the deployer. If you do, beware that tearing down will remove that bucket, without a prompt or confirmation, and potentially impact anyone else who may be using that same bucket.
+
+```json
+      {
+        "id": "nr_golden_dashboard",
+        "provider": "newrelic",
+        "provider_credential": "aws",
+        "source_repository": "https://github.com/newrelic/demo-newrelic-instrumentation.git",
+        "deploy_script_path": "deploy/dashboards/golden/terraform/roles",
+        "params": {
+          "s3_bucketname_tfstate": "terraform-dashboards"
+        }
+      }
 ```
 
 ## Contributing
