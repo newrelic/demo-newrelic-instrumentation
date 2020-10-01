@@ -2,14 +2,13 @@ terraform {
     required_providers {
         newrelic = {
         source  = "newrelic/newrelic"
-        version = "~> 2.8.0"
+        version = "~> 2.9.0"
         }
     }
 }
 
 provider "newrelic" {
     api_key       = var.newrelic_api_key
-    admin_api_key = var.newrelic_admin_api_key
     account_id    = var.newrelic_account_id
     region        = var.newrelic_region
 }
@@ -43,10 +42,6 @@ variable "service" {
 }
 variable "newrelic_api_key" {
     description = "The New Relic API key"
-    type = string
-}
-variable "newrelic_admin_api_key" {
-    description = "The New Relic Admin API key"
     type = string
 }
 variable "newrelic_account_id" {

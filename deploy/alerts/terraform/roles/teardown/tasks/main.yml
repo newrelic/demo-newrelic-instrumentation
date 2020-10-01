@@ -2,7 +2,6 @@
 
 # This play require the following variable set
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
-#   newrelic_admin_api_key: "<from user config newrelic credential>"
 #   newrelic_account_id: "<from user config newrelic credential>"
 #   newrelic_region: "<from user config newrelic credential>"
 #   service_display_name: "The entity display_name to create alert for"
@@ -18,9 +17,6 @@
 - fail:
     msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
   when: newrelic_personal_api_key is not defined
-- fail:
-    msg: "A newrelic nrAdminApiKey is required. Create this entry in your user config file"
-  when: newrelic_admin_api_key is not defined
 - fail:
     msg: "A newrelic accountId is required. Create this entry in your user config file"
   when: newrelic_account_id is not defined
@@ -57,7 +53,6 @@
           'cpu_threshold': 90
         },
         'newrelic_api_key': newrelic_personal_api_key,
-        'newrelic_admin_api_key': newrelic_admin_api_key,
         'newrelic_account_id': newrelic_account_id,
         'newrelic_region': newrelic_region
         })

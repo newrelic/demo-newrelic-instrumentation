@@ -2,7 +2,6 @@
 
 # This play require the following variable set
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
-#   newrelic_admin_api_key: "<from user config newrelic credential>"
 #   newrelic_account_id: "<from user config newrelic credential>"
 #   newrelic_region: "<from user config newrelic credential>"
 # The fields below are optional and can be set through the deploy config params
@@ -19,9 +18,6 @@
     msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
   when: newrelic_personal_api_key is not defined
 - fail:
-    msg: "A newrelic nrAdminApiKey is required. Create this entry in your user config file"
-  when: newrelic_admin_api_key is not defined
-- fail:
     msg: "A newrelic accountId is required. Create this entry in your user config file"
   when: newrelic_account_id is not defined
 - fail:
@@ -36,7 +32,6 @@
     set_fact:
       tfvars_json: "{{ (tfvars_json|default({})) | combine({
         'newrelic_api_key': newrelic_personal_api_key,
-        'newrelic_admin_api_key': newrelic_admin_api_key,
         'newrelic_account_id': newrelic_account_id,
         'newrelic_region': newrelic_region,
         'deployment_name': deployment_name
