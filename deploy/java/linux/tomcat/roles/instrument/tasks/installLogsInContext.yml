@@ -24,7 +24,7 @@
 - name: Place new logging.properties file for NR LiC
   template:
     src: logging.properties
-    dest: "logging_properties_file"
+    dest: "{{ logging_properties_file}} "
   when: logging_properties_file is defined
 
 - name: Find pom.xml file to add NR enricher dependency
