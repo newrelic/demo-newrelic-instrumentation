@@ -5,6 +5,9 @@
     paths: "/home/{{ remote_user }}/{{ service_id }}"
     contains: ".*java.util.logging*."
     patterns: "logging.properties"
+    use_regex: yes
+    depth: 5
+    recurse: true
   register: logging_found
 
 - name: set filename fact
@@ -27,7 +30,7 @@
 - name: Find pom.xml file to add NR enricher dependency
   find:
     paths: "/home/{{ remote_user }}/{{ service_id }}"
-    contains: ".*dependencies*."
+    contains: ".*<dependencies>*."
     patterns: "pom.xml"
   register: pom_xml_found
   when: logging_properties_file is defined
@@ -39,14 +42,8 @@
   when: logging_properties_file is defined
 
 - name: Adding NR enricher dependency to pom.xml file
-  blockinfile:
+  lineinfile:
     path: "{{ pom_xml_file }}"
-    insertafter: ".*dependencies*."
-    marker: "// {mark} NR logs enricher"
-    block: |
-    <dependency>
-        <groupId>com.newrelic.logging</groupId>
-        <artifactId>jul</artifactId>
-        <version>2.0</version>
-    </dependency>
+    insertafter: ".*<dependencies>*."
+    line: "<dependency><groupId>com.newrelic.logging</groupId><artifactId>jul</artifactId><version>2.0</version></dependency>"
   when: logging_properties_file is defined and pom_xml_file is defined
