@@ -49,5 +49,4 @@
         <artifactId>jul</artifactId>
         <version>2.0</version>
     </dependency>
-  when: logging_properties_file is defined
-  when: pom_xml_file is defined
+  when: logging_properties_file is defined and pom_xml_file is defined
