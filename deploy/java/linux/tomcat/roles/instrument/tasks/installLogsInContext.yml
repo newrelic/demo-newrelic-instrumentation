@@ -1,19 +1,35 @@
 ---
 
-- name: Find logging.properties files
+- name: Find src directory
   find:
     paths: "/home/{{ remote_user }}/{{ service_id }}"
+    patterns: "src"
+    file_type: directory
+    depth: 2
+    recurse: true
+  register: src_found
+
+- name: set directory fact
+  set_fact:
+    src_directory: "{{ item['path'] }}"
+  with_items: "{{ src_found.files }}"
+
+- name: Find logging.properties files
+  find:
+    paths: "{{ src_directory }}"
     contains: ".*java.util.logging*."
-    patterns: "logging.properties"
+    patterns: "^logging\\.properties$"
     use_regex: yes
-    depth: 5
+    depth: 3
     recurse: true
   register: logging_found
+  when: src_found is defined
 
 - name: set filename fact
   set_fact:
     logging_properties_file: "{{ item['path'] }}"
   with_items: "{{ logging_found.files }}"
+  when: logging_found is defined
 
 - name: Remove old logging properties file
   file:
