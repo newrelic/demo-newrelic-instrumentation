@@ -14,34 +14,34 @@
     src_directory: "{{ item['path'] }}"
   with_items: "{{ src_found.files }}"
 
-- name: Find logging.properties files
+- name: Find log4j2.xml file
   find:
     paths: "{{ src_directory }}"
-    contains: ".*java.util.logging*."
-    patterns: "^logging\\.properties$"
+    contains: ".*Configuration*."
+    patterns: "^log4j2\\.xml$"
     use_regex: yes
-    depth: 3
+    depth: 5
     recurse: true
   register: logging_found
   when: src_found is defined
 
 - name: set filename fact
   set_fact:
-    logging_properties_file: "{{ item['path'] }}"
+    log4j2_file: "{{ item['path'] }}"
   with_items: "{{ logging_found.files }}"
   when: logging_found is defined
 
-- name: Remove old logging properties file
+- name: Remove old logging file
   file:
     state: absent
-    path: "{{ logging_properties_file }}"
-  when: logging_properties_file is defined
+    path: "{{ log4j2_file }}"
+  when: log4j2_file is defined
 
-- name: Place new logging.properties file for NR LiC
+- name: Place new log4j2.xml file for NR LiC
   template:
-    src: logging.properties
-    dest: "{{ logging_properties_file}}"
-  when: logging_properties_file is defined
+    src: log4j2.xml
+    dest: "{{ log4j2_file}}"
+  when: log4j2_file is defined
 
 - name: Find pom.xml file to add NR enricher dependency
   find:
@@ -49,17 +49,22 @@
     contains: ".*<dependencies>*."
     patterns: "pom.xml"
   register: pom_xml_found
-  when: logging_properties_file is defined
+  when: log4j2_file is defined
 
 - name: set filename fact
   set_fact:
     pom_xml_file: "{{ item['path'] }}"
   with_items: "{{ pom_xml_found.files }}"
-  when: logging_properties_file is defined
+  when: log4j2_file is defined
 
 - name: Adding NR enricher dependency to pom.xml file
   lineinfile:
     path: "{{ pom_xml_file }}"
     insertafter: ".*<dependencies>*."
-    line: "<dependency><groupId>com.newrelic.logging</groupId><artifactId>jul</artifactId><version>2.0</version></dependency>"
-  when: logging_properties_file is defined and pom_xml_file is defined
+    line: "<dependency><groupId>com.newrelic.logging</groupId><artifactId>log4j2</artifactId><version>2.0</version></dependency>"
+  when: log4j2_file is defined and pom_xml_file is defined
+
+- name: No logging in context setup message
+  debug:
+    msg: "Could not find a log4j2.xml file to override with logs-in-context configuration"
+  when: log4j2_file is NOT defined
