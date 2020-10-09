@@ -67,4 +67,4 @@
 - name: No logging in context setup message
   debug:
     msg: "Could not find a log4j2.xml file to override with logs-in-context configuration"
-  when: log4j2_file is NOT defined
+  when: log4j2_file is not defined
