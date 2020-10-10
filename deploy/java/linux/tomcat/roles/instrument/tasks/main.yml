@@ -69,3 +69,5 @@
     server_user: tomcat
     server_group: tomcat
     restart_web_server: false
+
+- include_tasks: installLogsInContext.yml
