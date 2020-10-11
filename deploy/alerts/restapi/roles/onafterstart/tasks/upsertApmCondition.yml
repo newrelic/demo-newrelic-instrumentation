@@ -1,0 +1,27 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   application_id: The application_id of the apm service (integer)
+#   metric_name: the condition name, use for display
+
+#   metric_type: the type of the apm metric to set a condition for
+#   metric_threshold: the threshold for the condition
+#   metric_duration: the duration before starting to alert
+#   metric_operator: either 'above' or 'below' to parameterize the evaluation against the threshold value
+
+- name: Get existing conditions
+  shell: "curl -X GET 'https://api.newrelic.com/v2/alerts_conditions.json?policy_id={{ policy_id }}' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key'"
+  register: existing_conditions
+
+- debug:
+    msg: "existing_conditions:{{ existing_conditions.stdout }}"
+
+- set_fact: 
+    condition_id: "{{ existing_conditions.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "conditions[?id=='{{ application_id }}'] | [0].id"
+
+- fail:
+    msg: "Stop here.." 

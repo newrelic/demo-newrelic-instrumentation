@@ -12,6 +12,21 @@
 #   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
 #   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
 
+- name: Get application_id
+  shell: "curl -X GET 'https://api.newrelic.com/v2/applications.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L"
+  register: existing_applications
+
+- set_fact: 
+    application_id: "{{ existing_applications.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "applications[?name=='{{ service_display_name }}'] | [0].id"
+
+- debug:
+    msg: "No existing application found for {{ service_display_name }}"
+  when: not application_id
+
 - set_fact:
     policy_name: "Golden Signals - {{ service_display_name }}"
 
@@ -19,15 +34,17 @@
   shell: "curl -X GET 'https://api.newrelic.com/v2/alerts_policies.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key'"
   register: existing_policies
+  when: application_id
 
 - set_fact: 
-    existing_policy_id: "{{ existing_policies.stdout | from_json | json_query(query) }}"
+    policy_id: "{{ existing_policies.stdout | from_json | json_query(query) }}"
   vars:
     query: "policies[?name=='{{ policy_name }}'] | [0].id"
+  when: application_id and existing_policies
 
 - debug:
     msg: "No existing policy found for {{ policy_name }}"
-  when: not existing_policy_id
+  when: policy_id is undefined
 
 - name: Create new policy {{ policy_name }}
   shell: "curl -X POST 'https://api.newrelic.com/v2/alerts_policies.json' \
@@ -42,18 +59,23 @@
 }' 
  "
   register: new_policy_output
-  when: not existing_policy_id
+  when: application_id and not policy_id
 
 - set_fact: 
-    existing_policy_id: "{{ new_policy_output.stdout | from_json | json_query(query) }}"
+    policy_id: "{{ new_policy_output.stdout | from_json | json_query(query) }}"
   vars:
     query: "policy.id"
-  when: new_policy_output
-  when: not existing_policy_id
+  when: application_id and policy_id is undefined
 
 - debug:
-    msg: "Using policy id:{{ existing_policy_id }}"
-  when: existing_policy_id
+    msg: "Using policy id:{{ policy_id }}"
+  when: application_id and policy_id
+
+# Creating alert conditions
+- set_fact:
+    metric_name: "High Response Time (web)"
+- include: upsertApmCondition.yml 
+  when: application_id and policy_id
 
 - fail:
     msg: "Stop here.." 
