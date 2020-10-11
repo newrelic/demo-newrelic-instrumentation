@@ -12,11 +12,21 @@
 #   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
 #   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
 
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api: "api.newrelic.com"
+  when: newrelic_api is undefined
+
+- name: Ensure https api url
+  set_fact:
+    newrelic_api: "https://{{ newrelic_api }}"
+  when: not 'http' in newrelic_api
+
 - set_fact:
     policy_name: "Golden Signals - {{ service_display_name }}"
 
 - name: Get existing policies
-  shell: "curl -X GET 'https://api.newrelic.com/v2/alerts_policies.json' -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key'"
+  shell: "curl -X GET '{{ newrelic_api }}/v2/alerts_policies.json' -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key'"
   register: existing_policies
 
 - set_fact: 
@@ -25,7 +35,7 @@
     query: "policies[?name=='{{ policy_name }}'] | [0].id"
 
 - name: Delete existing policy {{ policy_name }}
-  shell: "curl -X DELETE 'https://api.newrelic.com/v2/alerts_policies/{{ existing_policy_id }}.json' \
+  shell: "curl -X DELETE '{{ newrelic_api }}/v2/alerts_policies/{{ existing_policy_id }}.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' "
   register: new_policy_output
   when: existing_policy_id
