@@ -3,6 +3,7 @@
 # This play require the following variable set
 #   newrelic_api: the http URL of the newrelic REST API endpoint
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   policy_id: the policy id
 #   application_id: The application_id of the apm service (integer)
 #   metric_name: the condition name, use for display
 #   metric_type: the type of the apm metric to set a condition for
