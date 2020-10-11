@@ -1,0 +1,64 @@
+---
+
+# This play require the following variable set
+#   newrelic_api: the http URL of the newrelic REST API endpoint
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   policy_id: the policy id
+#   application_id: The application_id of the apm service (integer)
+#   metric_name: the condition name, use for display
+#   metric_type: the type of the apm metric to set a condition for
+#   metric_duration: the duration before starting to alert
+#   metric_operator: either 'above' or 'below' to parameterize the evaluation against the threshold value
+#   metric_threshold: the threshold for the condition
+
+- name: Get existing conditions
+  shell: "curl -X GET '{{ newrelic_api }}/v2/alerts_conditions.json?policy_id={{ policy_id }}' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L"
+  register: existing_conditions
+
+- set_fact: 
+    condition_id: "{{ existing_conditions.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "conditions[?contains(entities, '{{ application_id }}') && name=='{{ metric_name }}'] | [0].id"
+
+- debug:
+    msg: "No existing condition found for {{ metric_name }}"
+  when: not condition_id
+
+- name: Prepare URL for creating
+  set_fact:
+    curl_command: "-X POST '{{ newrelic_api }}/v2/alerts_conditions/policies/{{ policy_id }}.json'"
+  when: not condition_id
+
+- name: Prepare URL for updating
+  set_fact:
+    curl_command: "-X PUT '{{ newrelic_api }}/v2/alerts_conditions/{{ condition_id }}.json'"
+  when: condition_id
+
+- name: Create condition
+  shell: "curl {{ curl_command }} \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L -H 'Content-Type: application/json' \
+     -d \
+'{
+  \"condition\": {
+    \"type\": \"apm_app_metric\",
+    \"name\": \"{{ metric_name }}\",
+    \"enabled\": true,
+    \"entities\": [
+      {{ application_id }}
+    ],
+    \"metric\": \"{{ metric_type }}\",
+    \"condition_scope\": \"application\",
+    \"terms\": [
+      {
+        \"duration\": \"{{ metric_duration }}\",
+        \"operator\": \"{{ metric_operator }}\",
+        \"threshold\": \"{{ metric_threshold }}\",
+        \"priority\": \"critical\",
+        \"time_function\": \"all\"
+      }
+    ]
+  }
+}'"

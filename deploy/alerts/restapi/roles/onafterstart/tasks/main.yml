@@ -1,0 +1,157 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   service_display_name: "The entity display_name to create alert for"
+
+# The fields below are optional and can be set through the deploy config params
+#   alert_duration: the number of minutes for a condition before reacting
+#   alert_response_time_threshold: the maximum number of seconds for processing requests before alerting
+#   alert_throughput_threshold: the minimum number of requests per minutes before alerting
+#   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
+#   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
+
+# Additional optional fields:
+#   newrelic_api: the URL for the newrelic REST API, default to main us URL
+
+# Testing with EU
+# - set_fact:
+#     newrelic_api: "api.eu.newrelic.com"
+
+- debug:
+    msg: "Deploying Golden Signals policy alerts for {{ service_display_name }} using REST v2 API"
+
+- fail:
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+
+- name: Set default alert value
+  set_fact:
+    alert_duration: "{{ alert_duration | default(5) }}"
+    alert_response_time_threshold: "{{ alert_response_time_threshold | default(5) }}"
+    alert_throughput_threshold: "{{ alert_throughput_threshold | default(1) }}"
+    alert_error_percentage_threshold: "{{ alert_error_percentage_threshold | default(5) }}"
+    alert_cpu_threshold: "{{ alert_cpu_threshold | default(90) }}"
+
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api: "api.newrelic.com"
+  when: newrelic_api is undefined
+- name: Ensure https api url
+  set_fact:
+    newrelic_api: "https://{{ newrelic_api }}"
+  when: not 'http' in newrelic_api
+
+- name: Set default newrelic infra api url
+  set_fact:
+    newrelic_infra_api: "infra-api.newrelic.com"
+  when: newrelic_infraCollector is undefined
+- name: Ensure https infra api url
+  set_fact:
+    newrelic_infra_api: "https://{{ newrelic_infra_api }}"
+  when: not 'http' in newrelic_infra_api
+
+- name: Get application_id
+  shell: "curl -X GET '{{ newrelic_api }}/v2/applications.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L"
+  register: existing_applications
+
+- set_fact: 
+    application_id: "{{ existing_applications.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "applications[?name=='{{ service_display_name }}'] | [0].id"
+
+- debug:
+    msg: "No existing application found for {{ service_display_name }}"
+  when: not application_id
+
+- set_fact:
+    policy_name: "Golden Signals - {{ service_display_name }}"
+
+- name: Get existing policies
+  shell: "curl -X GET '{{ newrelic_api }}/v2/alerts_policies.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L"
+  register: existing_policies
+  when: application_id
+
+- set_fact: 
+    policy_id: "{{ existing_policies.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "policies[?name=='{{ policy_name }}'] | [0].id"
+  when: application_id and existing_policies
+
+- debug:
+    msg: "No existing policy found for {{ policy_name }}"
+  when: policy_id is undefined
+
+- name: Create new policy {{ policy_name }}
+  shell: "curl -X POST '{{ newrelic_api }}/v2/alerts_policies.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -H 'Content-Type: application/json' \
+     -L -d \
+'{
+  \"policy\": {
+    \"incident_preference\": \"PER_POLICY\",
+    \"name\": \"{{ policy_name }}\"
+  }
+}' 
+ "
+  register: new_policy_output
+  when: application_id and not policy_id
+
+- set_fact: 
+    policy_id: "{{ new_policy_output.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "policy.id"
+  when: application_id and not policy_id
+
+- fail:
+    msg: "could not lookup policy_id for {{ policy_name }}"
+  when: not policy_id
+
+- debug:
+    msg: "Using policy id:{{ policy_id }}"
+  when: application_id and policy_id
+
+- name: Creating high response time condition
+  set_fact:
+    metric_name: "High Response Time (web)"
+    metric_type: "response_time_web"
+    metric_duration: "{{ alert_duration }}"
+    metric_operator: "above"
+    metric_threshold: "{{ alert_response_time_threshold }}"
+- include: upsertApmCondition.yml 
+  when: application_id and policy_id
+
+- name: Creating high error percentage condition
+  set_fact:
+    metric_name: "High Error Percentage"
+    metric_type: "error_percentage"
+    metric_duration: "{{ alert_duration }}"
+    metric_operator: "above"
+    metric_threshold: "{{ alert_error_percentage_threshold }}"
+- include: upsertApmCondition.yml 
+  when: application_id and policy_id
+
+- name: Creating low throughput condition
+  set_fact:
+    metric_name: "Low Throughput (web)"
+    metric_type: "throughput_web"
+    metric_duration: "{{ alert_duration }}"
+    metric_operator: "below"
+    metric_threshold: "{{ alert_throughput_threshold }}"
+- include: upsertApmCondition.yml 
+  when: application_id and policy_id
+
+- name: Creating high cpu condition
+  set_fact:
+    metric_name: "High CPU usage"
+    metric_type: "infra_metric"
+    metric_select_value: "cpuPercent"
+    metric_duration: "{{ alert_duration }}"
+    metric_operator: "above"
+    metric_threshold: "{{ alert_cpu_threshold }}"
+- include: upsertInfraCondition.yml 
+  when: application_id is defined and policy_id is defined 
