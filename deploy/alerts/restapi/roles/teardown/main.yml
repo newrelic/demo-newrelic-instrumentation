@@ -1,0 +1,35 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   newrelic_account_id: "<from user config newrelic credential>"
+#   newrelic_region: "<from user config newrelic credential>"
+#   service_display_name: "The entity display_name to create alert for"
+# The fields below are optional and can be set through the deploy config params
+#   alert_duration: the number of minutes for a condition before reacting
+#   alert_response_time_threshold: the maximum number of seconds for processing requests before alerting
+#   alert_throughput_threshold: the minimum number of requests per minutes before alerting
+#   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
+#   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
+
+- set_fact:
+    policy_name: "Golden Signals - {{ service_display_name }}"
+
+- name: Get existing policies
+  shell: "curl -X GET 'https://api.newrelic.com/v2/alerts_policies.json' -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key'"
+  register: existing_policies
+
+- set_fact: 
+    existing_policy_id: "{{ existing_policies.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "policies[?name=='{{ policy_name }}'] | [0].id"
+
+- name: Delete existing policy {{ policy_name }}
+  shell: "curl -X DELETE 'https://api.newrelic.com/v2/alerts_policies/{{ existing_policy_id }}.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' "
+  register: new_policy_output
+  when: existing_policy_id
+
+- debug:
+    msg: "No existing policy found for {{ policy_name }}"
+  when: not existing_policy_id
