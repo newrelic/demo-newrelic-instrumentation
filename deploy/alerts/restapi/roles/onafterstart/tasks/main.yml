@@ -5,6 +5,7 @@
 #   newrelic_account_id: "<from user config newrelic credential>"
 #   newrelic_region: "<from user config newrelic credential>"
 #   service_display_name: "The entity display_name to create alert for"
+#   newrelic_api: the URL for the newrelic REST API, default to main us URL
 # The fields below are optional and can be set through the deploy config params
 #   alert_duration: the number of minutes for a condition before reacting
 #   alert_response_time_threshold: the maximum number of seconds for processing requests before alerting
@@ -12,8 +13,22 @@
 #   alert_error_percentage_threshold: the maximum percentage of requests having an error before alerting
 #   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
 
+# Testing with EU
+# - set_fact:
+#     newrelic_api: "api.eu.newrelic.com"
+
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api: "api.newrelic.com"
+  when: newrelic_api is undefined
+
+- name: Ensure https api url
+  set_fact:
+    newrelic_api: "https://{{ newrelic_api }}"
+  when: not 'http' in newrelic_api
+
 - name: Get application_id
-  shell: "curl -X GET 'https://api.newrelic.com/v2/applications.json' \
+  shell: "curl -X GET '{{ newrelic_api }}/v2/applications.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -L"
   register: existing_applications
@@ -31,8 +46,9 @@
     policy_name: "Golden Signals - {{ service_display_name }}"
 
 - name: Get existing policies
-  shell: "curl -X GET 'https://api.newrelic.com/v2/alerts_policies.json' \
-     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key'"
+  shell: "curl -X GET '{{ newrelic_api }}/v2/alerts_policies.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L"
   register: existing_policies
   when: application_id
 
@@ -47,10 +63,10 @@
   when: policy_id is undefined
 
 - name: Create new policy {{ policy_name }}
-  shell: "curl -X POST 'https://api.newrelic.com/v2/alerts_policies.json' \
+  shell: "curl -X POST '{{ newrelic_api }}/v2/alerts_policies.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -H 'Content-Type: application/json' \
-     -d \
+     -L -d \
 '{
   \"policy\": {
     \"incident_preference\": \"PER_POLICY\",
@@ -72,8 +88,33 @@
   when: application_id and policy_id
 
 # Creating alert conditions
-- set_fact:
+- name: Creating high response time condition
+  set_fact:
     metric_name: "High Response Time (web)"
+    metric_type: "response_time_web"
+    metric_duration: 5
+    metric_operator: "above"
+    metric_threshold: 5
+- include: upsertApmCondition.yml 
+  when: application_id and policy_id
+
+- name: Creating high error percentage condition
+  set_fact:
+    metric_name: "High Error Percentage"
+    metric_type: "error_percentage"
+    metric_duration: 5
+    metric_operator: "above"
+    metric_threshold: 10
+- include: upsertApmCondition.yml 
+  when: application_id and policy_id
+
+- name: Creating low throughput condition
+  set_fact:
+    metric_name: "Low Throughput (web)"
+    metric_type: "throughput_web"
+    metric_duration: 5
+    metric_operator: "below"
+    metric_threshold: 5
 - include: upsertApmCondition.yml 
   when: application_id and policy_id
 
