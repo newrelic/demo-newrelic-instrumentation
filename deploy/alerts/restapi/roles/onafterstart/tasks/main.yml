@@ -55,6 +55,9 @@
     newrelic_infra_api: "https://{{ newrelic_infra_api }}"
   when: not "'http' in newrelic_infra_api"
 
+- debug:
+    msg: "Using newrelic_api:{{ newrelic_api }} and newrelic_infra_api:{{ newrelic_infra_api }}"
+
 - name: Get application_id
   shell: "curl -X GET '{{ newrelic_api }}/v2/applications.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
