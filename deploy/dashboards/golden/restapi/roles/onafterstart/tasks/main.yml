@@ -1,0 +1,194 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   newrelic_account_id: the newrelic account id
+
+# Additional optional fields:
+#   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
+#   dashboard_name: the dashboard name, otherwise default to "Golden {{ deployment_name }}"
+
+# Testing with EU
+# - set_fact:
+#     newrelic_api_url: "api.eu.newrelic.com"
+
+- debug:
+    msg: "Deploying dashboard for {{ deployment_name }} using REST v2 API"
+
+- fail:
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api_url: "api.newrelic.com"
+  when: newrelic_api_url is undefined
+- name: Ensure https api url
+  set_fact:
+    newrelic_api_url: "https://{{ newrelic_api_url }}"
+  when: not newrelic_api_url | regex_search('^https', ignorecase=True)
+
+- debug:
+    msg: "Using newrelic_api_url:{{ newrelic_api_url }}"
+
+- name: Set default dashboard name using deployment_name:{{ deployment_name }}
+  set_fact:
+    dashboard_name: "Golden {{ deployment_name }}"
+  when: dashboard_name is undefined
+
+- name: Get application_id
+  shell: "curl -X GET '{{ newrelic_api_url }}/v2/dashboards.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L"
+  register: existing_dashboards
+
+- set_fact: 
+    dashboard_id: "{{ existing_dashboards.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "dashboards[?title=='{{ dashboard_name }}'] | [0].id"
+
+- debug:
+    msg: "No existing dashboard found for {{ dashboard_name }}"
+  when: not dashboard_id
+
+- name: Prepare URL for creating
+  set_fact:
+    curl_command: "-X POST '{{ newrelic_api_url }}/v2/dashboards.json'"
+  when: not dashboard_id
+
+- name: Prepare URL for updating
+  set_fact:
+    curl_command: "-X PUT '{{ newrelic_api_url }}/v2/dashboards/{{ dashboard_id }}.json'"
+  when: dashboard_id
+
+- name: Prepare data
+  set_fact:
+    curl_data: "{
+    'dashboard': {
+        'title': '{{ dashboard_name }}',
+        'icon': 'line-chart',
+        'grid_column_count': 12,
+        'visibility': 'all',
+        'editable': 'editable_by_all',
+        'metadata': {
+            'version': 1
+        },
+        'widgets': [
+          {
+            'visualization': 'billboard',
+            'account_id': {{ newrelic_account_id }},
+            'presentation': {
+              'title': 'Errors'
+            },
+            'data':[
+              {
+                'nrql': \"SELECT count(*) FROM Transaction FACET appName WHERE httpResponseCode = '500' AND tags.dxDeploymentName = '{{ deployment_name }}'\"
+              }
+            ],
+            'layout':{
+              'row': 1,
+              'column': 1,
+              'width': 4,
+              'height': 3
+            }
+          },
+          {
+            'visualization': 'facet_pie_chart',
+            'account_id': {{ newrelic_account_id }},
+            'presentation': {
+              'title': 'Slowest Endpoints (95th percentile)'
+            },
+            'data':[
+              {
+                'nrql': \"SELECT average(duration) FROM Transaction FACET appName, name WHERE tags.dxDeploymentName = '{{ deployment_name }}'\"
+              }
+            ],
+            'layout':{
+              'row': 1,
+              'column': 5,
+              'width': 4,
+              'height': 3
+            }
+          },
+          {
+            'visualization': 'facet_pie_chart',
+            'account_id': {{ newrelic_account_id }},
+            'presentation': {
+              'title': 'Request Breakdown by Application'
+            },
+            'data':[
+              {
+                'nrql': \"SELECT count(*) FROM Transaction FACET appName LIMIT MAX WHERE tags.dxDeploymentName = '{{ deployment_name }}'\"
+              }
+            ],
+            'layout':{
+              'row': 1,
+              'column': 9,
+              'width': 4,
+              'height': 3
+            }
+          },
+          {
+            'visualization': 'faceted_line_chart',
+            'account_id': {{ newrelic_account_id }},
+            'presentation': {
+              'title': 'Host Memory Usage (percentage)'
+            },
+            'data':[
+              {
+                'nrql': \"SELECT average(memoryUsedPercent) as `% Used` FROM SystemSample TIMESERIES FACET entityName WHERE dxDeploymentName = '{{ deployment_name }}'\"
+              }
+            ],
+            'layout':{
+              'row': 4,
+              'column': 1,
+              'width': 4,
+              'height': 3
+            }
+          },
+          {
+            'visualization': 'faceted_area_chart',
+            'account_id': {{ newrelic_account_id }},
+            'presentation': {
+              'title': 'HTTP Responses'
+            },
+            'data':[
+              {
+                'nrql': \"SELECT count(*) FROM Transaction TIMESERIES FACET httpResponseCode WHERE tags.dxDeploymentName = '{{ deployment_name }}'\"
+              }
+            ],
+            'layout':{
+              'row': 4,
+              'column': 5,
+              'width': 4,
+              'height': 3
+            }
+          },
+          {
+            'visualization': 'faceted_line_chart',
+            'account_id': {{ newrelic_account_id }},
+            'presentation': {
+              'title': 'Heap Memory Used (percentage)'
+            },
+            'data':[
+              {
+                'nrql': \"SELECT average(`apm.service.memory.heap.used`)/average(`apm.service.memory.heap.max`)*100 FROM Metric FACET appName TIMESERIES WHERE tags.dxDeploymentName = '{{ deployment_name }}'\"
+              }
+            ],
+            'layout':{
+              'row': 4,
+              'column': 9,
+              'width': 4,
+              'height': 3
+            }
+          }
+        ]
+    }
+}"
+
+- name: Create dashboards
+  shell: "curl {{ curl_command }} \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L -H 'Content-Type: application/json' \
+     -d \
+'{{ curl_data | to_json }}'"
