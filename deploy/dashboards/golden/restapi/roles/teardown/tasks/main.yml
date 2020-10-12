@@ -48,7 +48,7 @@
     query: "dashboards[?title=='{{ dashboard_name }}'] | [0].id"
 
 - name: Delete existing policy {{ policy_name }}
-  shell: "curl -X DELETE '{{ newrelic_api }}/v2/dashboards/{{ dashboard_id }}.json' \
+  shell: "curl -X DELETE '{{ newrelic_api_url }}/v2/dashboards/{{ dashboard_id }}.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' -L"
   when: dashboard_id
 
