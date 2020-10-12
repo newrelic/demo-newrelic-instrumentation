@@ -26,7 +26,7 @@
     policy_name: "Golden Signals - {{ service_display_name }}"
 
 - name: Get existing policies
-  shell: "curl -X GET '{{ newrelic_api }}/v2/alerts_policies.json' -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key'"
+  shell: "curl -X GET '{{ newrelic_api }}/v2/alerts_policies.json' -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' -L"
   register: existing_policies
 
 - set_fact: 
@@ -36,7 +36,7 @@
 
 - name: Delete existing policy {{ policy_name }}
   shell: "curl -X DELETE '{{ newrelic_api }}/v2/alerts_policies/{{ existing_policy_id }}.json' \
-     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' "
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' -L"
   register: new_policy_output
   when: existing_policy_id
 
