@@ -44,8 +44,12 @@
 
 - name: Set default newrelic infra api url
   set_fact:
+    newrelic_infra_api: "{{ newrelic_infraCollector }}"
+  when: newrelic_infraCollector is defined
+- name: Set default newrelic infra api url
+  set_fact:
     newrelic_infra_api: "infra-api.newrelic.com"
-  when: newrelic_infraCollector is undefined
+  when: newrelic_infra_api is undefined
 - name: Ensure https infra api url
   set_fact:
     newrelic_infra_api: "https://{{ newrelic_infra_api }}"
