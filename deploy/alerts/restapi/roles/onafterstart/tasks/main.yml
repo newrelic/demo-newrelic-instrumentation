@@ -40,7 +40,7 @@
 - name: Ensure https api url
   set_fact:
     newrelic_api: "https://{{ newrelic_api }}"
-  when: not 'http' in newrelic_api
+  when: not "'http' in newrelic_api"
 
 - name: Set default newrelic infra api url
   set_fact:
@@ -49,7 +49,7 @@
 - name: Ensure https infra api url
   set_fact:
     newrelic_infra_api: "https://{{ newrelic_infra_api }}"
-  when: not 'http' in newrelic_infra_api
+  when: not "'http' in newrelic_infra_api"
 
 - name: Get application_id
   shell: "curl -X GET '{{ newrelic_api }}/v2/applications.json' \
