@@ -1,7 +1,7 @@
 ---
 
 # This play require the following variable set
-#   newrelic_api: the http URL of the newrelic REST API endpoint
+#   newrelic_api_url: the http URL of the newrelic REST API endpoint
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
 #   policy_id: the policy id
 #   application_id: The application_id of the apm service (integer)
@@ -12,7 +12,7 @@
 #   metric_threshold: the threshold for the condition
 
 - name: Get existing conditions
-  shell: "curl -X GET '{{ newrelic_api }}/v2/alerts_conditions.json?policy_id={{ policy_id }}' \
+  shell: "curl -X GET '{{ newrelic_api_url }}/v2/alerts_conditions.json?policy_id={{ policy_id }}' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -L"
   register: existing_conditions
@@ -28,12 +28,12 @@
 
 - name: Prepare URL for creating
   set_fact:
-    curl_command: "-X POST '{{ newrelic_api }}/v2/alerts_conditions/policies/{{ policy_id }}.json'"
+    curl_command: "-X POST '{{ newrelic_api_url }}/v2/alerts_conditions/policies/{{ policy_id }}.json'"
   when: not condition_id
 
 - name: Prepare URL for updating
   set_fact:
-    curl_command: "-X PUT '{{ newrelic_api }}/v2/alerts_conditions/{{ condition_id }}.json'"
+    curl_command: "-X PUT '{{ newrelic_api_url }}/v2/alerts_conditions/{{ condition_id }}.json'"
   when: condition_id
 
 - name: Create condition

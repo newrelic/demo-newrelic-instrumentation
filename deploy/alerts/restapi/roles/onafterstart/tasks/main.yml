@@ -12,11 +12,12 @@
 #   alert_cpu_threshold: the maximum percentage for the host CPU before alerting
 
 # Additional optional fields:
-#   newrelic_api: the URL for the newrelic REST API, default to main us URL
+#   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
+#   newrelic_infra_collector_url: the URL for the newrelic Infra collector REST API, default to main us URL
 
 # Testing with EU
 # - set_fact:
-#     newrelic_api: "api.eu.newrelic.com"
+#     newrelic_api_url: "api.eu.newrelic.com"
 
 - debug:
     msg: "Deploying Golden Signals policy alerts for {{ service_display_name }} using REST v2 API"
@@ -35,31 +36,27 @@
 
 - name: Set default newrelic api url
   set_fact:
-    newrelic_api: "api.newrelic.com"
-  when: newrelic_api is undefined
+    newrelic_api_url: "api.newrelic.com"
+  when: newrelic_api_url is undefined
 - name: Ensure https api url
   set_fact:
-    newrelic_api: "https://{{ newrelic_api }}"
-  when: not newrelic_api | regex_search('^https', ignorecase=True)
+    newrelic_api_url: "https://{{ newrelic_api_url }}"
+  when: not newrelic_api_url | regex_search('^https', ignorecase=True)
 
 - name: Set default newrelic infra api url
   set_fact:
-    newrelic_infra_api: "{{ newrelic_infraCollector }}"
-  when: newrelic_infraCollector is defined
-- name: Set default newrelic infra api url
-  set_fact:
-    newrelic_infra_api: "infra-api.newrelic.com"
-  when: newrelic_infra_api is undefined
+    newrelic_infra_collector_url: "infra-api.newrelic.com"
+  when: newrelic_infra_collector_url is undefined
 - name: Ensure https infra api url
   set_fact:
-    newrelic_infra_api: "https://{{ newrelic_infra_api }}"
-  when: not newrelic_infra_api | regex_search('^https', ignorecase=True)
+    newrelic_infra_collector_url: "https://{{ newrelic_infra_collector_url }}"
+  when: not newrelic_infra_collector_url | regex_search('^https', ignorecase=True)
 
 - debug:
-    msg: "Using newrelic_api:{{ newrelic_api }} and newrelic_infra_api:{{ newrelic_infra_api }}"
+    msg: "Using newrelic_api_url:{{ newrelic_api_url }} and newrelic_infra_collector_url:{{ newrelic_infra_collector_url }}"
 
 - name: Get application_id
-  shell: "curl -X GET '{{ newrelic_api }}/v2/applications.json' \
+  shell: "curl -X GET '{{ newrelic_api_url }}/v2/applications.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -L"
   register: existing_applications
@@ -77,7 +74,7 @@
     policy_name: "Golden Signals - {{ service_display_name }}"
 
 - name: Get existing policies
-  shell: "curl -X GET '{{ newrelic_api }}/v2/alerts_policies.json' \
+  shell: "curl -X GET '{{ newrelic_api_url }}/v2/alerts_policies.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -L"
   register: existing_policies
@@ -94,7 +91,7 @@
   when: policy_id is undefined
 
 - name: Create new policy {{ policy_name }}
-  shell: "curl -X POST '{{ newrelic_api }}/v2/alerts_policies.json' \
+  shell: "curl -X POST '{{ newrelic_api_url }}/v2/alerts_policies.json' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -H 'Content-Type: application/json' \
      -L -d \

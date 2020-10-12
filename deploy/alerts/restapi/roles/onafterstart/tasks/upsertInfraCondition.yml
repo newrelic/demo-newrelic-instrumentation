@@ -1,7 +1,7 @@
 ---
 
 # This play require the following variable set
-#   newrelic_infra_api: the http URL of the newrelic Infrastructure REST API endpoint
+#   newrelic_infra_collector_url: the http URL of the newrelic Infrastructure REST API endpoint
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
 #   policy_id: the policy id
 #   application_id: The application_id of the apm service (integer)
@@ -12,7 +12,7 @@
 #   metric_threshold: the threshold for the condition
 
 - name: Get existing conditions
-  shell: "curl -X GET '{{ newrelic_infra_api }}/v2/alerts/conditions?policy_id={{ policy_id }}' \
+  shell: "curl -X GET '{{ newrelic_infra_collector_url }}/v2/alerts/conditions?policy_id={{ policy_id }}' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -L"
   register: existing_conditions
@@ -21,7 +21,6 @@
     condition_id: "{{ existing_conditions.stdout | from_json | json_query(query) }}"
   vars:
     query: "data[?contains(where_clause, '{{ application_id }}') && contains(where_clause, '`applicationId` =') && name=='{{ metric_name }}'] | [0].id"
-    # query: "data[?(where_clause==\"(`applicationId` = '{{ application_id }}')\" || where_clause==\"(`applicationId` = {{ application_id }})\") && name=='{{ metric_name }}'] | [0].id"
 
 - debug:
     msg: "No existing condition found for {{ metric_name }}"
@@ -29,7 +28,7 @@
 
 - name: Prepare URL for creating
   set_fact:
-    curl_command: "-X POST '{{ newrelic_infra_api }}/v2/alerts/conditions'"
+    curl_command: "-X POST '{{ newrelic_infra_collector_url }}/v2/alerts/conditions'"
     curl_data: "{
   'data': {
     'type': 'infra_metric',
@@ -50,7 +49,7 @@
 
 - name: Prepare URL for updating
   set_fact:
-    curl_command: "-X PUT '{{ newrelic_infra_api }}/v2/alerts/conditions/{{ condition_id }}'"
+    curl_command: "-X PUT '{{ newrelic_infra_collector_url }}/v2/alerts/conditions/{{ condition_id }}'"
     curl_data: "{{ curl_data | combine({
           'data': {
               'id': condition_id | int
