@@ -74,7 +74,3 @@
      -L -H 'Content-Type: application/json' \
      -d @{{ playbook_dir }}/dashboard.json"
   delegate_to: localhost
-
-- name: Stop
-  fail:
-    msg: "Stop here"
