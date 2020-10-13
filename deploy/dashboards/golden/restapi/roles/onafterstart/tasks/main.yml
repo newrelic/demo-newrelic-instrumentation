@@ -41,6 +41,7 @@
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -L"
   register: existing_dashboards
+  delegate_to: localhost
 
 - set_fact: 
     dashboard_id: "{{ existing_dashboards.stdout | from_json | json_query(query) }}"
@@ -65,9 +66,11 @@
   template:
     src: dashboard.source.json
     dest: "{{ playbook_dir }}/dashboard.json"
+  delegate_to: localhost
 
 - name: Create dashboards
   shell: "curl {{ curl_command }} \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -L -H 'Content-Type: application/json' \
      -d @{{ playbook_dir }}/dashboard.json"
+  delegate_to: localhost
