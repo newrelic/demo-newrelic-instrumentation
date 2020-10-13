@@ -1,0 +1,9 @@
+mutation
+{ 
+    workloadDelete(
+        guid: "{{workload_id}}"
+    )
+    {
+        guid
+    }
+}

@@ -1,0 +1,22 @@
+mutation
+{ 
+    workloadUpdate(
+        guid: "{{workload_id}}",
+        workload:
+        { 
+            name: "{{workload_name}}",
+            entitySearchQueries: [
+                {
+                    query: "{{entity_search_query}}"
+                }
+            ],
+            scopeAccounts:
+            {
+                accountIds: [ {{newrelic_account_id}} ]
+            }
+        }
+    )
+    {
+        guid
+    }
+}

@@ -76,28 +76,9 @@
     msg: "Using workload_id:{{workload_id}}"
   when: workload_id is defined
 
-- name: Create create_workload payload
-  template:
-    src: ../../templates/create_workload.source.gql
-    dest: "{{ playbook_dir }}/create_workload.gql"
-  delegate_to: localhost
+- include: createWorkload.yml 
+  when: not workload_id
 
-- name: Prepare POST payload for graphql
-  set_fact:
-    gql_content: "{{ lookup('file', '{{playbook_dir}}/create_workload.gql') | replace('\n', ' ') }}"
+- include: updateWorkload.yml 
+  when: workload_id is defined and workload_id != ""
 
-- name: Create payload file
-  template:
-    src: ../../templates/gql_query.source.json
-    dest: "{{ playbook_dir }}/gql_query.json"
-  delegate_to: localhost
-
-- name: Create Workload
-  shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
-     -H 'Api-Key:{{ newrelic_personal_api_key }}' \
-     -L -H 'Content-Type: application/json' \
-     -d @{{ playbook_dir }}/gql_query.json"
-  delegate_to: localhost
-
-- fail:
-    msg: "stop here"

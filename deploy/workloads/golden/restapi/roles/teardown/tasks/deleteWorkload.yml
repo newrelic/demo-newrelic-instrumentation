@@ -1,0 +1,24 @@
+---
+
+- name: Create delete_workload payload
+  template:
+    src: ../../templates/delete_workload.source.gql
+    dest: "{{ playbook_dir }}/delete_workload.gql"
+  delegate_to: localhost
+
+- name: Prepare POST payload for graphql
+  set_fact:
+    gql_content: "{{ lookup('file', '{{playbook_dir}}/delete_workload.gql') | replace('\n', ' ') }}"
+
+- name: Create payload file
+  template:
+    src: ../../templates/gql_query.source.json
+    dest: "{{ playbook_dir }}/gql_query.json"
+  delegate_to: localhost
+
+- name: Delete Workload
+  shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+     -L -H 'Content-Type: application/json' \
+     -d @{{ playbook_dir }}/gql_query.json"
+  delegate_to: localhost

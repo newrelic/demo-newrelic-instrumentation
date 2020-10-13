@@ -70,5 +70,5 @@
     msg: "Using workload_id:{{workload_id}}"
   when: workload_id is defined
 
-- fail:
-    msg: "stop here"
+- include: deleteWorkload.yml 
+  when: workload_id is defined and workload_id != ""
