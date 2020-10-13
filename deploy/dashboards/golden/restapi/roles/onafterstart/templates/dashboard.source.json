@@ -11,7 +11,6 @@
         "widgets": [
             {
                 "visualization": "billboard",
-                "account_id": "{{newrelic_account_id}}",
                 "presentation": {
                     "title": "Errors"
                 },
@@ -29,7 +28,6 @@
             },
             {
                 "visualization": "facet_pie_chart",
-                "account_id": "{{newrelic_account_id}}",
                 "presentation": {
                     "title": "Slowest Endpoints (95th percentile)"
                 },
@@ -47,7 +45,6 @@
             },
             {
                 "visualization": "facet_pie_chart",
-                "account_id": "{{newrelic_account_id}}",
                 "presentation": {
                     "title": "Request Breakdown by Application"
                 },
@@ -65,7 +62,6 @@
             },
             {
                 "visualization": "faceted_line_chart",
-                "account_id": "{{newrelic_account_id}}",
                 "presentation": {
                     "title": "Host Memory Usage (percentage)"
                 },
@@ -83,7 +79,6 @@
             },
             {
                 "visualization": "faceted_area_chart",
-                "account_id": "{{newrelic_account_id}}",
                 "presentation": {
                     "title": "HTTP Responses"
                 },
@@ -101,7 +96,6 @@
             },
             {
                 "visualization": "faceted_line_chart",
-                "account_id": "{{newrelic_account_id}}",
                 "presentation": {
                     "title": "Heap Memory Used (percentage)"
                 },
