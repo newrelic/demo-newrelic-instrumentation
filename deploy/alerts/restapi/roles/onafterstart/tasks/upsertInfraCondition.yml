@@ -27,6 +27,15 @@
     msg: "No existing condition found for {{ metric_name }}"
   when: condition_id is not defined
 
+- name: Prepare URL for creating
+  set_fact:
+    curl_command: "-X POST '{{ newrelic_infra_collector_url }}/v2/alerts/conditions'"
+  when: not condition_id
+- name: Prepare URL for updating
+  set_fact:
+    curl_command: "-X PUT '{{ newrelic_infra_collector_url }}/v2/alerts/conditions/{{ condition_id }}'"
+  when: condition_id
+
 - name: create condition payload
   template:
     src: infraCondition.source.json

@@ -5,7 +5,7 @@
         "enabled": true,
         "where_clause": "(`applicationId` = '{{application_id}}')",
         "policy_id": {{policy_id}},
-{% if condition_id is defined %}
+{% if condition_id %}
         "id": {{condition_id}},
 {% endif %}
         "event_type": "SystemSample",
