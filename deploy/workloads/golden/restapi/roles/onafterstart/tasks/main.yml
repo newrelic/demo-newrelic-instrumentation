@@ -64,6 +64,7 @@
 - name: Init entity search query
   set_fact:
     entity_search_query: "`tags.dxDeploymentName` = '{{deployment_name}}'"
+  when: entity_search_query is not defined
 
 - name: Create create_workload payload
   template:
