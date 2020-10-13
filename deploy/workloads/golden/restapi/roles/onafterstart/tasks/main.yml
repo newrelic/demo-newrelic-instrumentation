@@ -61,5 +61,22 @@
     msg: "Using workload_id:{{workload_id}}"
   when: workload_id|bool
 
+- name: Init entity search query
+  set_fact:
+    entity_search_query: "`tags.dxDeploymentName` = '{{deployment_name}}'"
+
+- name: Create create_workload payload
+  template:
+    src: ../../templates/create_workload.source.json
+    dest: "{{ playbook_dir }}/create_workload.json"
+  delegate_to: localhost
+
+- name: Create Workload
+  shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+     -L -H 'Content-Type: application/json' \
+     -d @{{ playbook_dir }}/create_workload.json"
+  delegate_to: localhost
+
 - fail:
     msg: "stop here"
