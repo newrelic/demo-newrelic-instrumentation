@@ -1,0 +1,20 @@
+{
+    "data": {
+        "type": "infra_metric",
+        "name": "{{metric_name}}",
+        "enabled": true,
+        "where_clause": "(`applicationId` = '{{application_id}}')",
+        "policy_id": {{policy_id}},
+{% if condition_id is defined %}
+        "id": {{condition_id}},
+{% endif %}
+        "event_type": "SystemSample",
+        "select_value": "{{metric_select_value}}",
+        "comparison": "{{metric_operator}}",
+        "critical_threshold": {
+            "value": {{metric_threshold}},
+            "duration_minutes": {{metric_duration}},
+            "time_function": "all"
+        }
+    }
+}

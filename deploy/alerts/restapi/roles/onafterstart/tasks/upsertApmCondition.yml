@@ -36,29 +36,13 @@
     curl_command: "-X PUT '{{ newrelic_api_url }}/v2/alerts_conditions/{{ condition_id }}.json'"
   when: condition_id
 
+- name: create condition payload
+  template:
+    src: apmCondition.source.json
+    dest: "{{ playbook_dir }}/apmCondition.json"
+
 - name: Create condition
   shell: "curl {{ curl_command }} \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
      -L -H 'Content-Type: application/json' \
-     -d \
-'{
-  \"condition\": {
-    \"type\": \"apm_app_metric\",
-    \"name\": \"{{ metric_name }}\",
-    \"enabled\": true,
-    \"entities\": [
-      {{ application_id }}
-    ],
-    \"metric\": \"{{ metric_type }}\",
-    \"condition_scope\": \"application\",
-    \"terms\": [
-      {
-        \"duration\": \"{{ metric_duration }}\",
-        \"operator\": \"{{ metric_operator }}\",
-        \"threshold\": \"{{ metric_threshold }}\",
-        \"priority\": \"critical\",
-        \"time_function\": \"all\"
-      }
-    ]
-  }
-}'"
+     -d @{{ playbook_dir }}/apmCondition.json"

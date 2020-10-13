@@ -1,0 +1,19 @@
+{
+    "condition": {
+        "type": "apm_app_metric",
+        "name": "{{metric_name}}",
+        "enabled": true,
+        "entities": [ {{application_id}} ],
+        "metric": "{{metric_type}}",
+        "condition_scope": "application",
+        "terms": [
+        {
+            "duration": "{{metric_duration}}",
+            "operator": "{{metric_operator}}",
+            "threshold": "{{metric_threshold}}",
+            "priority": "critical",
+            "time_function": "all"
+        }
+        ]
+    }
+  }
