@@ -36,17 +36,32 @@
     workload_name: "Golden {{ deployment_name }}"
   when: workload_name is undefined
 
+- name: Set default entity search query
+  set_fact:
+    entity_search_query: "`tags.dxDeploymentName` = '{{deployment_name}}'"
+  when: entity_search_query is not defined
+
 - name: Create get_workload_id payload
   template:
-    src: ../../templates/get_workload_id.source.json
-    dest: "{{ playbook_dir }}/get_workload_id.json"
+    src: ../../templates/get_workload_id.source.gql
+    dest: "{{ playbook_dir }}/get_workload_id.gql"
+  delegate_to: localhost
+
+- name: Prepare POST payload for graphql
+  set_fact:
+    gql_content: "{{ lookup('file', '{{playbook_dir}}/get_workload_id.gql') | replace('\n', ' ') }}"
+
+- name: Create payload file
+  template:
+    src: ../../templates/gql_query.source.json
+    dest: "{{ playbook_dir }}/gql_query.json"
   delegate_to: localhost
 
 - name: Get Workload id
   shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' \
      -L -H 'Content-Type: application/json' \
-     -d @{{ playbook_dir }}/get_workload_id.json"
+     -d @{{ playbook_dir }}/gql_query.json"
   register: existing_workloads
   delegate_to: localhost
 
@@ -59,24 +74,29 @@
 - name: Output found workload_id
   debug:
     msg: "Using workload_id:{{workload_id}}"
-  when: workload_id|bool
-
-- name: Init entity search query
-  set_fact:
-    entity_search_query: "`tags.dxDeploymentName` = '{{deployment_name}}'"
-  when: entity_search_query is not defined
+  when: workload_id is defined
 
 - name: Create create_workload payload
   template:
-    src: ../../templates/create_workload.source.json
-    dest: "{{ playbook_dir }}/create_workload.json"
+    src: ../../templates/create_workload.source.gql
+    dest: "{{ playbook_dir }}/create_workload.gql"
+  delegate_to: localhost
+
+- name: Prepare POST payload for graphql
+  set_fact:
+    gql_content: "{{ lookup('file', '{{playbook_dir}}/create_workload.gql') | replace('\n', ' ') }}"
+
+- name: Create payload file
+  template:
+    src: ../../templates/gql_query.source.json
+    dest: "{{ playbook_dir }}/gql_query.json"
   delegate_to: localhost
 
 - name: Create Workload
   shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' \
      -L -H 'Content-Type: application/json' \
-     -d @{{ playbook_dir }}/create_workload.json"
+     -d @{{ playbook_dir }}/gql_query.json"
   delegate_to: localhost
 
 - fail:

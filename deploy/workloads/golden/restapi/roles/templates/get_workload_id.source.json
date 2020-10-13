@@ -1,3 +1,0 @@
-{
-  "query": "{ actor { account(id: {{newrelic_account_id}}) { workload { collections { guid, name } } } } }"
-}
