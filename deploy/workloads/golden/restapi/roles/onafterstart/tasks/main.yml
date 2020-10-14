@@ -1,0 +1,84 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   newrelic_account_id: the newrelic account id
+
+# Additional optional fields:
+#   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
+#   workload_name: the workload name, otherwise default to "Golden {{ deployment_name }}"
+
+# Testing with EU
+# - set_fact:
+#     newrelic_api_url: "api.eu.newrelic.com"
+
+- debug:
+    msg: "Deploying workload for {{ deployment_name }} using NerdGraph API"
+
+- fail:
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api_url: "api.newrelic.com"
+  when: newrelic_api_url is undefined
+- name: Ensure https api url
+  set_fact:
+    newrelic_api_url: "https://{{ newrelic_api_url }}"
+  when: not newrelic_api_url | regex_search('^https', ignorecase=True)
+
+- debug:
+    msg: "Using newrelic_api_url:{{ newrelic_api_url }}"
+
+- name: Set default workload name using deployment_name:{{ deployment_name }}
+  set_fact:
+    workload_name: "Golden {{ deployment_name }}"
+  when: workload_name is undefined
+
+- name: Set default entity search query
+  set_fact:
+    entity_search_query: "`tags.dxDeploymentName` = '{{deployment_name}}'"
+  when: entity_search_query is not defined
+
+- name: Create get_workload_id payload
+  template:
+    src: ../../templates/get_workload_id.source.gql
+    dest: "{{ playbook_dir }}/get_workload_id.gql"
+  delegate_to: localhost
+
+- name: Prepare POST payload for graphql
+  set_fact:
+    gql_content: "{{ lookup('file', '{{playbook_dir}}/get_workload_id.gql') | replace('\n', ' ') }}"
+
+- name: Create payload file
+  template:
+    src: ../../templates/gql_query.source.json
+    dest: "{{ playbook_dir }}/gql_query.json"
+  delegate_to: localhost
+
+- name: Get Workload id
+  shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+     -L -H 'Content-Type: application/json' \
+     -d @{{ playbook_dir }}/gql_query.json"
+  register: existing_workloads
+  delegate_to: localhost
+
+- name: Parse workload_id
+  set_fact: 
+    workload_id: "{{ existing_workloads.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "data.actor.account.workload.collections[?name=='{{ workload_name }}'] | [0].guid"
+
+- name: Output found workload_id
+  debug:
+    msg: "Using workload_id:{{workload_id}}"
+  when: workload_id is defined
+
+- include: createWorkload.yml 
+  when: not workload_id
+
+- include: updateWorkload.yml 
+  when: workload_id is defined and workload_id != ""
+
