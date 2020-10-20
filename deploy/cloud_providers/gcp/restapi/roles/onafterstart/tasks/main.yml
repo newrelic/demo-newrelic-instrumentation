@@ -92,7 +92,7 @@
 
 
 - name: Get
-  google.cloud.gcp_iam_service_account_facts:
+  gcp_iam_service_account_facts:
     project: "{{gcp_project}}"
     auth_kind: "{{gcp_auth_kind}}"
     service_account_file: "{{gcp_service_account_file}}"
