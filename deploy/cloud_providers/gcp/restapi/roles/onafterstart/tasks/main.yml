@@ -90,6 +90,14 @@
 #     state: present
 #   delegate_to: localhost
 
+- name: create a service account
+  google.cloud.gcp_iam_service_account:
+    name: "{{authLabel}}"
+    display_name: "{{gcp_integration_name}}"
+    project: "{{gcp_project}}"
+    auth_kind: "{{gcp_auth_kind}}"
+    service_account_file: "{{gcp_service_account_file}}"
+    state: present
 
 - name: Get
   google.cloud.gcp_iam_service_account_info:
