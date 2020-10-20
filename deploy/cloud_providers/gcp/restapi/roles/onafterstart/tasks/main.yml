@@ -77,25 +77,26 @@
   debug:
     msg: "authLabel:{{authLabel}}"
 
-- name: create NR auth access to GCP
-  google.cloud.gcp_iam_role:
-    name: "{{authLabel}}"
-    title: "{{gcp_integration_name}}"
-    description: "Access for NewRelic GCP integration"
-    included_permissions:
-    - iam.roles.list
-    project: "{{gcp_project}}"
-    auth_kind: "{{gcp_auth_kind}}"
-    service_account_file: "{{gcp_service_account_file}}"
-    state: present
-  delegate_to: localhost
-
-
-# - name: "get roles"
-#   google.cloud.gcp_iam_role_info:
+# - name: create NR auth access to GCP
+#   google.cloud.gcp_iam_role:
+#     name: "{{authLabel}}"
+#     title: "{{gcp_integration_name}}"
+#     description: "Access for NewRelic GCP integration"
+#     included_permissions:
+#     - iam.roles.list
 #     project: "{{gcp_project}}"
 #     auth_kind: "{{gcp_auth_kind}}"
 #     service_account_file: "{{gcp_service_account_file}}"
+#     state: present
+#   delegate_to: localhost
+
+
+- name: Get
+  google.cloud.gcp_iam_service_account_facts:
+    project: "{{gcp_project}}"
+    auth_kind: "{{gcp_auth_kind}}"
+    service_account_file: "{{gcp_service_account_file}}"
+  register: facts
 
 - name: Output
   debug:
