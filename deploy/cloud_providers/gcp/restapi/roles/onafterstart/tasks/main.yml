@@ -77,13 +77,25 @@
   debug:
     msg: "authLabel:{{authLabel}}"
 
-- name: get roles
-  google.cloud.gcp_iam_role_info:
+- name: create NR auth access to GCP
+  google.cloud.gcp_iam_role:
+    name: "{{authLabel}}"
+    title: "{{gcp_integration_name}}"
+    description: "Access for NewRelic GCP integration"
+    included_permissions:
+    - iam.roles.list
     project: "{{gcp_project}}"
     auth_kind: "{{gcp_auth_kind}}"
     service_account_file: "{{gcp_service_account_file}}"
+    state: present
   delegate_to: localhost
-  register: facts
+
+
+# - name: "get roles"
+#   google.cloud.gcp_iam_role_info:
+#     project: "{{gcp_project}}"
+#     auth_kind: "{{gcp_auth_kind}}"
+#     service_account_file: "{{gcp_service_account_file}}"
 
 - name: Output
   debug:
@@ -91,19 +103,4 @@
 
 - fail:
     msg: "Stop here"
-
-# - name: create NR auth access to GCP
-#   google.cloud.gcp_iam_role:
-#     name: "{{authLabel}}"
-#     title: "{{gcp_integration_name}}"
-#     description: "Access for NewRelic GCP integration"
-#     included_permissions:
-#     - iam.roles.list
-#     - iam.roles.create
-#     - iam.roles.delete
-#     project: "{{gcp_project}}"
-#     auth_kind: "{{gcp_auth_kind}}"
-#     service_account_file: "{{gcp_service_account_file}}"
-#     state: present
-# delegate_to: localhost
 
