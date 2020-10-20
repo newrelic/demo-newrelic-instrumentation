@@ -6,6 +6,7 @@
 #   gcp_project_id: the GCP projectId
 #   gcp_auth_kind: should be "serviceaccount"
 #   gcp_service_account_file: the location of the service account file containing the GCP credentials
+#   gcp_region: the GCP region
 
 # Additional optional fields:
 #   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
@@ -77,38 +78,16 @@
   debug:
     msg: "authLabel:{{authLabel}}"
 
-# - name: create NR auth access to GCP
-#   google.cloud.gcp_iam_role:
-#     name: "{{authLabel}}"
-#     title: "{{gcp_integration_name}}"
-#     description: "Access for NewRelic GCP integration"
-#     included_permissions:
-#     - iam.roles.list
-#     project: "{{gcp_project}}"
-#     auth_kind: "{{gcp_auth_kind}}"
-#     service_account_file: "{{gcp_service_account_file}}"
-#     state: present
-#   delegate_to: localhost
+- name: create infra config file
+  template:
+    src: ../../templates/create_iam_member.source.tf
+    dest: "{{ playbook_dir }}/main.tf"
 
-- name: create a service account
-  google.cloud.gcp_iam_service_account:
-    name: "{{authLabel}}"
-    display_name: "{{gcp_integration_name}}"
-    project: "{{gcp_project}}"
-    auth_kind: "{{gcp_auth_kind}}"
-    service_account_file: "{{gcp_service_account_file}}"
-    state: present
+- name: "Initialize terraform"
+  shell: "terraform init"
 
-- name: Get
-  google.cloud.gcp_iam_service_account_info:
-    project: "{{gcp_project}}"
-    auth_kind: "{{gcp_auth_kind}}"
-    service_account_file: "{{gcp_service_account_file}}"
-  register: facts
-
-- name: Output
-  debug:
-    msg: "facts:{{facts}}"
+- name: "Execute terraform apply"
+  shell: "terraform apply -auto-approve"
 
 - fail:
     msg: "Stop here"
