@@ -5,7 +5,7 @@
 #   newrelic_account_id: the newrelic account id
 #   gcp_project_id: the GCP projectId
 #   gcp_auth_kind: should be "serviceaccount"
-#   service_account_file: the location of the service account file containing the GCP credentials
+#   gcp_service_account_file: the location of the service account file containing the GCP credentials
 
 # Additional optional fields:
 #   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
@@ -57,9 +57,9 @@
 
 - name: Create integration
   shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
-     -H 'Api-Key:{{ newrelic_personal_api_key }}' \
-     -L -H 'Content-Type: application/json' \
-     -d @{{ playbook_dir }}/gql_query.json"
+    -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+    -L -H 'Content-Type: application/json' \
+    -d @{{ playbook_dir }}/gql_query.json"
   register: output_create_integration
   delegate_to: localhost
 
@@ -77,5 +77,33 @@
   debug:
     msg: "authLabel:{{authLabel}}"
 
+- name: get roles
+  google.cloud.gcp_iam_role_info:
+    project: "{{gcp_project}}"
+    auth_kind: "{{gcp_auth_kind}}"
+    service_account_file: "{{gcp_service_account_file}}"
+  delegate_to: localhost
+  register: facts
+
+- name: Output
+  debug:
+    msg: "facts:{{facts}}"
+
 - fail:
     msg: "Stop here"
+
+# - name: create NR auth access to GCP
+#   google.cloud.gcp_iam_role:
+#     name: "{{authLabel}}"
+#     title: "{{gcp_integration_name}}"
+#     description: "Access for NewRelic GCP integration"
+#     included_permissions:
+#     - iam.roles.list
+#     - iam.roles.create
+#     - iam.roles.delete
+#     project: "{{gcp_project}}"
+#     auth_kind: "{{gcp_auth_kind}}"
+#     service_account_file: "{{gcp_service_account_file}}"
+#     state: present
+# delegate_to: localhost
+
