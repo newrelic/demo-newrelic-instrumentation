@@ -2,8 +2,7 @@
 
 # This play require the following variable set
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
-#   newrelic_account_id: the newrelic account id
-#   gcp_project_id: the GCP projectId
+#   gcp_project: the GCP projectId
 #   gcp_auth_kind: should be "serviceaccount"
 #   gcp_service_account_file: the location of the service account file containing the GCP credentials
 #   gcp_region: the GCP region
@@ -17,11 +16,26 @@
 #     newrelic_api_url: "api.eu.newrelic.com"
 
 - debug:
-    msg: "Deploying dashboard for {{ deployment_name }} using REST v2 API"
+    msg: "Deploying GCP cloud provider integration"
 
+# NewRelic required field
 - fail:
     msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
   when: newrelic_personal_api_key is not defined
+
+# GCP required fields
+- fail:
+    msg: "A gcp_project is required. Create this entry in your user config file"
+  when: gcp_project is not defined
+- fail:
+    msg: "A gcp_auth_kind is required. Create this entry in your user config file"
+  when: gcp_auth_kind is not defined
+- fail:
+    msg: "A gcp_service_account_file is required. Create this entry in your user config file"
+  when: gcp_service_account_file is not defined
+- fail:
+    msg: "A gcp_region is required. Create this entry in your user config file"
+  when: gcp_region is not defined
 
 - name: Set default newrelic api url
   set_fact:
@@ -88,7 +102,3 @@
 
 - name: "Execute terraform apply"
   shell: "terraform apply -auto-approve"
-
-- fail:
-    msg: "Stop here"
-
