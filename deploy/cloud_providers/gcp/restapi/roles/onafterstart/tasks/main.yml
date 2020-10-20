@@ -67,11 +67,15 @@
   debug:
     msg: "output_create_integration:{{output_create_integration}}"
 
-# - name: Parse authLabel
-#   set_fact: 
-#     workload_id: "{{ existing_workloads.stdout | from_json | json_query(query) }}"
-#   vars:
-#     query: "authLabel.actor.account.workload.collections[?name=='{{ workload_name }}'] | [0].guid"
+- name: Parse authLabel
+  set_fact: 
+    authLabel: "{{ output_create_integration.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "data.cloudLinkAccount.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].authLabel"
+
+- name: Output
+  debug:
+    msg: "authLabel:{{authLabel}}"
 
 - fail:
     msg: "Stop here"
