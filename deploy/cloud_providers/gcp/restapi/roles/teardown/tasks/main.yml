@@ -2,10 +2,6 @@
 
 # This play require the following variable set
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
-#   gcp_project: the GCP projectId
-#   gcp_auth_kind: should be "serviceaccount"
-#   gcp_service_account_file: the location of the service account file containing the GCP credentials
-#   gcp_region: the GCP region
 
 # Additional optional fields:
 #   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
@@ -16,26 +12,12 @@
 #     newrelic_api_url: "api.eu.newrelic.com"
 
 - debug:
-    msg: "Deploying GCP cloud provider integration"
+    msg: "Tearing down GCP cloud provider integration"
 
 # NewRelic required field
 - fail:
     msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
   when: newrelic_personal_api_key is not defined
-
-# GCP required fields
-- fail:
-    msg: "A gcp_project is required. Create this entry in your user config file"
-  when: gcp_project is not defined
-- fail:
-    msg: "A gcp_auth_kind is required. Create this entry in your user config file"
-  when: gcp_auth_kind is not defined
-- fail:
-    msg: "A gcp_service_account_file is required. Create this entry in your user config file"
-  when: gcp_service_account_file is not defined
-- fail:
-    msg: "A gcp_region is required. Create this entry in your user config file"
-  when: gcp_region is not defined
 
 - name: Set default newrelic api url
   set_fact:
@@ -81,5 +63,5 @@
   vars:
     query: "data.actor.account.cloud.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].id"
 
-- include: createIntegration.yml 
-  when: not linked_account_id
+- include: deleteIntegration.yml 
+  when: linked_account_id is defined

@@ -1,7 +1,7 @@
 mutation 
 { 
     cloudLinkAccount( 
-        accountId: {{newrelic_account_id}}, 
+        accountId: {{newrelic_account_id}},
         accounts: 
         { 
             gcp: [

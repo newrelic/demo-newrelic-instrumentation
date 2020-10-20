@@ -1,0 +1,23 @@
+---
+
+# Delete integration
+- name: Delete payload
+  template:
+    src: ../../templates/delete_gcp_integration.source.gql
+    dest: "{{ playbook_dir }}/delete_gcp_integration.gql"
+  delegate_to: localhost
+- name: Prepare POST payload for graphql
+  set_fact:
+    gql_content: "{{ lookup('file', '{{playbook_dir}}/delete_gcp_integration.gql') | replace('\n', ' ') }}"
+- name: Create payload file
+  template:
+    src: ../../templates/gql_query.source.json
+    dest: "{{ playbook_dir }}/gql_query.json"
+  delegate_to: localhost
+- name: Delete integration
+  shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+    -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+    -L -H 'Content-Type: application/json' \
+    -d @{{ playbook_dir }}/gql_query.json"
+  register: output_delete_integration
+  delegate_to: localhost
