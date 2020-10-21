@@ -1,0 +1,67 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+
+# Additional optional fields:
+#   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
+#   gcp_integration_name: the gcp integration name, otherwise default to "NewRelic GCP integration {{ deployment_name }}"
+
+# Testing with EU
+# - set_fact:
+#     newrelic_api_url: "api.eu.newrelic.com"
+
+- debug:
+    msg: "Tearing down GCP cloud provider integration"
+
+# NewRelic required field
+- fail:
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api_url: "api.newrelic.com"
+  when: newrelic_api_url is undefined
+- name: Ensure https api url
+  set_fact:
+    newrelic_api_url: "https://{{ newrelic_api_url }}"
+  when: not newrelic_api_url | regex_search('^https', ignorecase=True)
+
+- debug:
+    msg: "Using newrelic_api_url:{{ newrelic_api_url }}"
+
+- name: Set default integration name using deployment_name:{{ deployment_name }}
+  set_fact:
+    gcp_integration_name: "NewRelic GCP integration {{ deployment_name }}"
+  when: gcp_integration_name is undefined
+
+# Find existing integration
+- name: Create payload
+  template:
+    src: ../../templates/find_gcp_integration_id.source.gql
+    dest: "{{ playbook_dir }}/find_gcp_integration_id.gql"
+  delegate_to: localhost
+- name: Prepare POST payload for graphql
+  set_fact:
+    gql_content: "{{ lookup('file', '{{playbook_dir}}/find_gcp_integration_id.gql') | replace('\n', ' ') }}"
+- name: Create payload file
+  template:
+    src: ../../templates/gql_query.source.json
+    dest: "{{ playbook_dir }}/gql_query.json"
+  delegate_to: localhost
+- name: Execute query
+  shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+    -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+    -L -H 'Content-Type: application/json' \
+    -d @{{ playbook_dir }}/gql_query.json"
+  register: output_find_integration
+  delegate_to: localhost
+- name: Parse linked_account_id
+  set_fact: 
+    linked_account_id: "{{ output_find_integration.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "data.actor.account.cloud.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].id"
+
+- include: deleteIntegration.yml 
+  when: linked_account_id is defined
