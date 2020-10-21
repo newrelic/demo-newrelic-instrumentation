@@ -1,0 +1,17 @@
+mutation 
+{ 
+    cloudLinkAccount( 
+        accountId: {{newrelic_account_id}},
+        accounts: 
+        { 
+            gcp: [
+                { 
+                    name: "{{gcp_integration_name}}",
+                    projectId: "{{gcp_project}}"
+                }]
+        }
+    ) 
+    {
+        linkedAccounts {id name authLabel createdAt updatedAt}
+    } 
+}
