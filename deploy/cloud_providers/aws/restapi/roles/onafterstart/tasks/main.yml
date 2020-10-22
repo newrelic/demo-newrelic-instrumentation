@@ -65,7 +65,7 @@
     register: output_find_role
   - name: Find role arn
     set_fact: 
-      aws_role_arn: "{{output_find_role['iam_roles'][0].arn}}"
+      aws_role_arn_exist: "{{output_find_role['iam_roles'][0].arn}}"
     when: output_find_role is defined and (output_find_role['iam_roles']|length > 0)
 
   - block:
@@ -93,17 +93,22 @@
         policy_name: "NewRelicBudget-{{ deployment_name }}"
         policy_json: "{{ lookup( 'template', '../../templates/newrelic_budget_policy.source.json') }}"
         state: present
-    - name: Lookup existing role
-      iam_role_info:
-        aws_access_key: "{{ aws_access_key }}"
-        aws_secret_key: "{{ aws_secret_key }}"
-        region: "{{ aws_region }}"
-        name: "{{aws_role_name}}"
-      register: output_find_role
-    - name: Find role arn
-      set_fact: 
-        aws_role_arn: "{{output_find_role['iam_roles'][0].arn}}"
-      when: output_find_role is defined and (output_find_role['iam_roles']|length > 0)
+    when: aws_role_arn_exist is not defined
+
+  - name: Get role arn
+    iam_role_info:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+      name: "{{aws_role_name}}"
+    register: output_find_role
+  - name: Find role arn
+    set_fact: 
+      aws_role_arn: "{{output_find_role['iam_roles'][0].arn}}"
+    when: output_find_role is defined and (output_find_role['iam_roles']|length > 0)
+  - name: Ensure role arn is defined
+    fail:
+      msg: "AWS role_arn is not defined, cannot proceed with integration setup."
     when: aws_role_arn is not defined
 
 # Find existing NR integration
