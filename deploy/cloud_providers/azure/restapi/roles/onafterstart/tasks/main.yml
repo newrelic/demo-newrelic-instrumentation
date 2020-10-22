@@ -2,40 +2,40 @@
 
 # This play require the following variable set
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
-#   gcp_project: the GCP projectId
-#   gcp_auth_kind: should be "serviceaccount"
-#   gcp_service_account_file: the location of the service account file containing the GCP credentials
-#   gcp_region: the GCP region
+#   azure_subscription_id: the Azure subscription id
+#   azure_tenant: the Azure tenant id
+#   azure_client_id: the Azure client id (also named application id)
+#   azure_secret: the Azure secret
 
 # Additional optional fields:
 #   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
-#   gcp_integration_name: the gcp integration name, otherwise default to "NewRelic GCP integration {{ deployment_name }}"
+#   azure_integration_name: the azure integration name, otherwise default to "NewRelic Azure integration {{ deployment_name }}"
 
 # Testing with EU
 # - set_fact:
 #     newrelic_api_url: "api.eu.newrelic.com"
 
 - debug:
-    msg: "Deploying GCP cloud provider integration"
+    msg: "Deploying Azure cloud provider integration"
 
 # NewRelic required field
 - fail:
     msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
   when: newrelic_personal_api_key is not defined
 
-# GCP required fields
+# Azure required fields
 - fail:
-    msg: "A gcp_project is required. Create this entry in your user config file"
-  when: gcp_project is not defined
+    msg: "A azure_subscription_id is required. Create this entry in your user config file"
+  when: azure_subscription_id is not defined
 - fail:
-    msg: "A gcp_auth_kind is required. Create this entry in your user config file"
-  when: gcp_auth_kind is not defined
+    msg: "A azure_tenant is required. Create this entry in your user config file"
+  when: azure_tenant is not defined
 - fail:
-    msg: "A gcp_service_account_file is required. Create this entry in your user config file"
-  when: gcp_service_account_file is not defined
+    msg: "A azure_client_id is required. Create this entry in your user config file"
+  when: azure_client_id is not defined
 - fail:
-    msg: "A gcp_region is required. Create this entry in your user config file"
-  when: gcp_region is not defined
+    msg: "A azure_secret is required. Create this entry in your user config file"
+  when: azure_secret is not defined
 
 - name: Set default newrelic api url
   set_fact:
@@ -51,18 +51,18 @@
 
 - name: Set default integration name using deployment_name:{{ deployment_name }}
   set_fact:
-    gcp_integration_name: "NewRelic GCP integration {{ deployment_name }}"
-  when: gcp_integration_name is undefined
+    azure_integration_name: "NewRelic Azure integration {{ deployment_name }}"
+  when: azure_integration_name is undefined
 
 # Find existing integration
 - block:
   - name: Create payload
     template:
-      src: ../../templates/find_gcp_integration_id.source.gql
-      dest: "{{ playbook_dir }}/find_gcp_integration_id.gql"
+      src: ../../templates/find_integration_id.source.gql
+      dest: "{{ playbook_dir }}/find_integration_id.gql"
   - name: Prepare POST payload for graphql
     set_fact:
-      gql_content: "{{ lookup('file', '{{playbook_dir}}/find_gcp_integration_id.gql') | replace('\n', ' ') }}"
+      gql_content: "{{ lookup('file', '{{playbook_dir}}/find_integration_id.gql') | replace('\n', ' ') }}"
   - name: Create payload file
     template:
       src: ../../templates/gql_query.source.json
@@ -73,66 +73,49 @@
       -L -H 'Content-Type: application/json' \
       -d @{{ playbook_dir }}/gql_query.json"
     register: output_find_integration
-  - name: Parse linked_account_id
+  - name: Parse output
     set_fact: 
       linked_account_id: "{{ output_find_integration.stdout | from_json | json_query(query) }}"
     vars:
-      query: "data.actor.account.cloud.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].id"
+      query: "data.actor.account.cloud.linkedAccounts[?name=='{{ azure_integration_name }}'] | [0].id"
   delegate_to: localhost
 
 # Create integration
 - block:
   - name: Create payload
     template:
-      src: ../../templates/create_gcp_integration.source.gql
-      dest: "{{ playbook_dir }}/create_gcp_integration.gql"
-    delegate_to: localhost
+      src: ../../templates/create_azure_integration.source.gql
+      dest: "{{ playbook_dir }}/create_azure_integration.gql"
   - name: Prepare POST payload for graphql
     set_fact:
-      gql_content: "{{ lookup('file', '{{playbook_dir}}/create_gcp_integration.gql') | replace('\n', ' ') }}"
+      gql_content: "{{ lookup('file', '{{playbook_dir}}/create_azure_integration.gql') | replace('\n', ' ') }}"
   - name: Create payload file
     template:
       src: ../../templates/gql_query.source.json
       dest: "{{ playbook_dir }}/gql_query.json"
-    delegate_to: localhost
   - name: Create integration
     shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
       -H 'Api-Key:{{ newrelic_personal_api_key }}' \
       -L -H 'Content-Type: application/json' \
       -d @{{ playbook_dir }}/gql_query.json"
     register: output_create_integration
-  - name: Parse authLabel
-    set_fact: 
-      authLabel: "{{ output_create_integration.stdout | from_json | json_query(query) }}"
-    vars:
-      query: "data.cloudLinkAccount.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].authLabel"
-  # Create GCP member to allow NR to fetch the data
-  - name: create infra config file
-    template:
-      src: ../../templates/create_iam_member.source.tf
-      dest: "{{ playbook_dir }}/main.tf"
-  - name: "Initialize terraform"
-    shell: "terraform init"
-  - name: "Execute terraform apply"
-    shell: "terraform apply -auto-approve"
-  # Fetch new linked_account_id (must be after everything else not to skip any previous steps)
   - name: Parse linked_account_id
     set_fact: 
       linked_account_id: "{{ output_create_integration.stdout | from_json | json_query(query) }}"
     vars:
-      query: "data.cloudLinkAccount.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].id"
-  delegate_to: localhost
+      query: "data.cloudLinkAccount.linkedAccounts[?name=='{{ azure_integration_name }}'] | [0].id"
   when: not linked_account_id
+  delegate_to: localhost
 
 # Configure specific cloud integrations
 - block:
   - name: Create payload
     template:
-      src: ../../templates/configure_gcp_integration.source.gql
-      dest: "{{ playbook_dir }}/configure_gcp_integration.gql"
+      src: ../../templates/configure_azure_integration.source.gql
+      dest: "{{ playbook_dir }}/configure_azure_integration.gql"
   - name: Prepare POST payload for graphql
     set_fact:
-      gql_content: "{{ lookup('file', '{{playbook_dir}}/configure_gcp_integration.gql') | replace('\n', ' ') }}"
+      gql_content: "{{ lookup('file', '{{playbook_dir}}/configure_azure_integration.gql') | replace('\n', ' ') }}"
   - name: Create payload file
     template:
       src: ../../templates/gql_query.source.json

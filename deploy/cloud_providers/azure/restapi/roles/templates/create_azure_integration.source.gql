@@ -1,0 +1,20 @@
+mutation 
+{ 
+    cloudLinkAccount( 
+        accountId: {{newrelic_account_id}},
+        accounts: 
+        { 
+            azure: [
+                { 
+                    name: "{{azure_integration_name}}",
+                    applicationId: "{{azure_client_id}}",
+                    clientSecret: "{{azure_secret}}",
+                    tenantId: "{{azure_tenant}}",
+                    subscriptionId: "{{azure_subscription_id}}"
+                }]
+        }
+    ) 
+    {
+        linkedAccounts {id name authLabel createdAt updatedAt}
+    } 
+}

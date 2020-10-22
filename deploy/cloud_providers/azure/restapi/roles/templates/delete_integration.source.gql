@@ -1,0 +1,16 @@
+mutation {
+  cloudUnlinkAccount (
+    accountId: {{newrelic_account_id}},
+    accounts: { linkedAccountId: {{linked_account_id}} }
+  ) 
+  {
+    unlinkedAccounts {
+      id
+      name
+    }
+    errors {
+      type
+      message
+    }
+  }
+}

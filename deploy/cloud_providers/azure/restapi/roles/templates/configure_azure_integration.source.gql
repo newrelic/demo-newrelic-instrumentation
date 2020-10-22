@@ -1,0 +1,49 @@
+mutation {
+  cloudConfigureIntegration(
+        accountId: {{newrelic_account_id}},
+        integrations: {
+            azure: {
+                azureVms: {linkedAccountId: {{linked_account_id}}},
+                azureApimanagement: {linkedAccountId: {{linked_account_id}}},
+                azureAppgateway: {linkedAccountId: {{linked_account_id}}},
+                azureAppservice: {linkedAccountId: {{linked_account_id}}},
+                azureContainers: {linkedAccountId: {{linked_account_id}}},
+                azureCosmosdb: {linkedAccountId: {{linked_account_id}}},
+                azureCostmanagement: {linkedAccountId: {{linked_account_id}}},
+                azureDatafactory: {linkedAccountId: {{linked_account_id}}},
+                azureEventhub: {linkedAccountId: {{linked_account_id}}},
+                azureExpressroute: {linkedAccountId: {{linked_account_id}}},
+                azureFirewalls: {linkedAccountId: {{linked_account_id}}},
+                azureFrontdoor: {linkedAccountId: {{linked_account_id}}},
+                azureFunctions: {linkedAccountId: {{linked_account_id}}},
+                azureKeyvault: {linkedAccountId: {{linked_account_id}}},
+                azureLoadbalancer: {linkedAccountId: {{linked_account_id}}},
+                azureLogicapps: {linkedAccountId: {{linked_account_id}}},
+                azureMachinelearning: {linkedAccountId: {{linked_account_id}}},
+                azureMariadb: {linkedAccountId: {{linked_account_id}}},
+                azureMysql: {linkedAccountId: {{linked_account_id}}},
+                azurePostgresql: {linkedAccountId: {{linked_account_id}}},
+                azurePowerbidedicated: {linkedAccountId: {{linked_account_id}}},
+                azureRediscache: {linkedAccountId: {{linked_account_id}}},
+                azureServicebus: {linkedAccountId: {{linked_account_id}}},
+                azureServicefabric: {linkedAccountId: {{linked_account_id}}},
+                azureSql: {linkedAccountId: {{linked_account_id}}},
+                azureSqlmanaged: {linkedAccountId: {{linked_account_id}}},
+                azureStorage: {linkedAccountId: {{linked_account_id}}},
+                azureVirtualmachine: {linkedAccountId: {{linked_account_id}}},
+                azureVirtualnetworks: {linkedAccountId: {{linked_account_id}}},
+                azureVpngateways: {linkedAccountId: {{linked_account_id}}}
+                }
+            }
+        )
+    {
+    errors {
+      message
+      type
+    }
+    integrations {
+      id
+      name
+    }
+  }
+}

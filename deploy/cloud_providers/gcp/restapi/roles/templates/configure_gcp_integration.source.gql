@@ -1,0 +1,40 @@
+mutation {
+  cloudConfigureIntegration(
+        accountId: {{newrelic_account_id}},
+        integrations: {
+          gcp: {
+            gcpAppengine: {linkedAccountId: {{linked_account_id}}},
+            gcpBigquery: {linkedAccountId: {{linked_account_id}}},
+            gcpDataflow: {linkedAccountId: {{linked_account_id}}},
+            gcpDataproc: {linkedAccountId: {{linked_account_id}}},
+            gcpDatastore: {linkedAccountId: {{linked_account_id}}},
+            gcpFirebasedatabase: {linkedAccountId: {{linked_account_id}}},
+            gcpFirebasehosting: {linkedAccountId: {{linked_account_id}}},
+            gcpFirebasestorage: {linkedAccountId: {{linked_account_id}}},
+            gcpFirestore: {linkedAccountId: {{linked_account_id}}},
+            gcpFunctions: {linkedAccountId: {{linked_account_id}}},
+            gcpInterconnect: {linkedAccountId: {{linked_account_id}}},
+            gcpKubernetes: {linkedAccountId: {{linked_account_id}}},
+            gcpLoadbalancing: {linkedAccountId: {{linked_account_id}}},
+            gcpPubsub: {linkedAccountId: {{linked_account_id}}},
+            gcpRouter: {linkedAccountId: {{linked_account_id}}},
+            gcpRun: {linkedAccountId: {{linked_account_id}}},
+            gcpSpanner: {linkedAccountId: {{linked_account_id}}},
+            gcpSql: {linkedAccountId: {{linked_account_id}}},
+            gcpStorage: {linkedAccountId: {{linked_account_id}}},
+            gcpVms: {linkedAccountId: {{linked_account_id}}},
+            gcpVpcaccess: {linkedAccountId: {{linked_account_id}}}
+            }
+          }
+        )
+    {
+    errors {
+      message
+      type
+    }
+    integrations {
+      id
+      name
+    }
+  }
+}
