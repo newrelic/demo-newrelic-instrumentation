@@ -1,0 +1,71 @@
+mutation {
+  cloudConfigureIntegration(
+        accountId: {{newrelic_account_id}},
+        integrations: {
+            aws: {
+                efs: {linkedAccountId: {{linked_account_id}}},
+                awsMsk: {linkedAccountId: {{linked_account_id}}},
+                emr: {linkedAccountId: {{linked_account_id}}},
+                route53: {linkedAccountId: {{linked_account_id}}},
+                lambda: {linkedAccountId: {{linked_account_id}}},
+                awsKinesisanalytics: {linkedAccountId: {{linked_account_id}}},
+                rds: {linkedAccountId: {{linked_account_id}}},
+                awsMq: {linkedAccountId: {{linked_account_id}}},
+                ecs: {linkedAccountId: {{linked_account_id}}},
+                awsConnect: {linkedAccountId: {{linked_account_id}}},
+                cloudtrail: {linkedAccountId: {{linked_account_id}}},
+                billing: {linkedAccountId: {{linked_account_id}}},
+                alb: {linkedAccountId: {{linked_account_id}}},
+                ses: {linkedAccountId: {{linked_account_id}}},
+                awsStates: {linkedAccountId: {{linked_account_id}}},
+                awsTransitgateway: {linkedAccountId: {{linked_account_id}}},
+                awsNeptune: {linkedAccountId: {{linked_account_id}}},
+                awsFsx: {linkedAccountId: {{linked_account_id}}},
+                cloudfront: {linkedAccountId: {{linked_account_id}}},
+                awsMediapackagevod: {linkedAccountId: {{linked_account_id}}},
+                trustedadvisor: {linkedAccountId: {{linked_account_id}}},
+                elasticache: {linkedAccountId: {{linked_account_id}}},
+                dynamodb: {linkedAccountId: {{linked_account_id}}},
+                apigateway: {linkedAccountId: {{linked_account_id}}},
+                sns: {linkedAccountId: {{linked_account_id}}},
+                awsDocdb: {linkedAccountId: {{linked_account_id}}},
+                elb: {linkedAccountId: {{linked_account_id}}},
+                kinesisFirehose: {linkedAccountId: {{linked_account_id}}},
+                vpc: {linkedAccountId: {{linked_account_id}}},
+                redshift: {linkedAccountId: {{linked_account_id}}},
+                elasticbeanstalk: {linkedAccountId: {{linked_account_id}}},
+                elasticsearch: {linkedAccountId: {{linked_account_id}}},
+                awsXray: {linkedAccountId: {{linked_account_id}}},
+                s3: {linkedAccountId: {{linked_account_id}}},
+                sqs: {linkedAccountId: {{linked_account_id}}},
+                ebs: {linkedAccountId: {{linked_account_id}}},
+                iam: {linkedAccountId: {{linked_account_id}}},
+                awsAthena: {linkedAccountId: {{linked_account_id}}},
+                awsRoute53resolver: {linkedAccountId: {{linked_account_id}}},
+                ec2: {linkedAccountId: {{linked_account_id}}},
+                awsDirectconnect: {linkedAccountId: {{linked_account_id}}},
+                autoscaling: {linkedAccountId: {{linked_account_id}}},
+                awsCognito: {linkedAccountId: {{linked_account_id}}},
+                awsAppsync: {linkedAccountId: {{linked_account_id}}},
+                awsWafv2: {linkedAccountId: {{linked_account_id}}},
+                awsQldb: {linkedAccountId: {{linked_account_id}}},
+                health: {linkedAccountId: {{linked_account_id}}},
+                kinesis: {linkedAccountId: {{linked_account_id}}},
+                awsWaf: {linkedAccountId: {{linked_account_id}}},
+                iot: {linkedAccountId: {{linked_account_id}}},
+                awsMediaconvert: {linkedAccountId: {{linked_account_id}}},
+                awsGlue: {linkedAccountId: {{linked_account_id}}}
+                }
+            }
+        )
+    {
+    errors {
+      message
+      type
+    }
+    integrations {
+      id
+      name
+    }
+  }
+}

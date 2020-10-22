@@ -1,0 +1,12 @@
+query cloudProviders {
+  actor {
+    account(id: {{newrelic_account_id}}) {
+      cloud {
+        linkedAccounts {
+          id
+          name
+        }
+      }
+    }
+  }
+}

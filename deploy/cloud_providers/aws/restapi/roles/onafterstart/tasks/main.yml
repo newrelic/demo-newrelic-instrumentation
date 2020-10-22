@@ -1,0 +1,181 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   aws_access_key: The aws access key
+#   aws_secret_key: The aws secret key
+#   aws_region: The aws region
+
+# Additional optional fields:
+#   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
+#   aws_integration_name: the aws integration name, otherwise default to "NewRelic AWS integration {{ deployment_name }}"
+
+# Testing with EU
+# - set_fact:
+#     newrelic_api_url: "api.eu.newrelic.com"
+
+- debug:
+    msg: "Deploying AWS cloud provider integration"
+
+# NewRelic required field
+- fail:
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+
+# AWS required fields
+- fail:
+    msg: "A aws_access_key is required. Create this entry in your user config file"
+  when: aws_access_key is not defined
+- fail:
+    msg: "A aws_secret_key is required. Create this entry in your user config file"
+  when: aws_secret_key is not defined
+- fail:
+    msg: "A aws_region is required. Create this entry in your user config file"
+  when: aws_region is not defined
+
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api_url: "api.newrelic.com"
+  when: newrelic_api_url is undefined
+- name: Ensure https api url
+  set_fact:
+    newrelic_api_url: "https://{{ newrelic_api_url }}"
+  when: not newrelic_api_url | regex_search('^https', ignorecase=True)
+
+- debug:
+    msg: "Using newrelic_api_url:{{ newrelic_api_url }}"
+
+- name: Set default integration name using deployment_name:{{ deployment_name }}
+  set_fact:
+    aws_integration_name: "NewRelic AWS integration {{ deployment_name }}"
+  when: aws_integration_name is undefined
+
+# Get or Create AWS role for integration
+- block:
+  - name: Init aws role name for integration
+    set_fact:
+      aws_role_name: "NewRelicInfrastructure-Integrations-{{ deployment_name }}"
+
+  - name: Lookup existing role
+    iam_role_info:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+      name: "{{aws_role_name}}"
+    register: output_find_role
+  - name: Find role arn
+    set_fact: 
+      aws_role_arn: "{{output_find_role['iam_roles'][0].arn}}"
+    when: output_find_role is defined and (output_find_role['iam_roles']|length > 0)
+
+  - block:
+    - name: Create payload file
+      template:
+        src: ../../templates/role_policy.source.json
+        dest: "{{ playbook_dir }}/policy.json"
+    - name: Create a role with description and tags
+      iam_role:
+        name: "{{ aws_role_name }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        region: "{{ aws_region }}"
+        assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+        managed_policies:
+          - arn:aws:iam::aws:policy/ReadOnlyAccess
+        description: "{{aws_integration_name}}"
+    - name: Adding budget inline policy
+      iam_policy:
+        iam_type: role
+        iam_name: "{{ aws_role_name }}"
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        region: "{{ aws_region }}"
+        policy_name: "NewRelicBudget-{{ deployment_name }}"
+        policy_json: "{{ lookup( 'template', '../../templates/newrelic_budget_policy.source.json') }}"
+        state: present
+    - name: Lookup existing role
+      iam_role_info:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        region: "{{ aws_region }}"
+        name: "{{aws_role_name}}"
+      register: output_find_role
+    - name: Find role arn
+      set_fact: 
+        aws_role_arn: "{{output_find_role['iam_roles'][0].arn}}"
+      when: output_find_role is defined and (output_find_role['iam_roles']|length > 0)
+    when: aws_role_arn is not defined
+
+# Find existing NR integration
+- block:
+  - name: Create payload
+    template:
+      src: ../../templates/find_integration_id.source.gql
+      dest: "{{ playbook_dir }}/find_integration_id.gql"
+  - name: Prepare POST payload for graphql
+    set_fact:
+      gql_content: "{{ lookup('file', '{{playbook_dir}}/find_integration_id.gql') | replace('\n', ' ') }}"
+  - name: Create payload file
+    template:
+      src: ../../templates/gql_query.source.json
+      dest: "{{ playbook_dir }}/gql_query.json"
+  - name: Execute query
+    shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+      -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+      -L -H 'Content-Type: application/json' \
+      -d @{{ playbook_dir }}/gql_query.json"
+    register: output_find_integration
+  - name: Parse output
+    set_fact: 
+      linked_account_id: "{{ output_find_integration.stdout | from_json | json_query(query) }}"
+    vars:
+      query: "data.actor.account.cloud.linkedAccounts[?name=='{{ aws_integration_name }}'] | [0].id"
+  delegate_to: localhost
+
+# Create NR integration
+- block:
+  - name: Create payload
+    template:
+      src: ../../templates/create_aws_integration.source.gql
+      dest: "{{ playbook_dir }}/create_aws_integration.gql"
+  - name: Prepare POST payload for graphql
+    set_fact:
+      gql_content: "{{ lookup('file', '{{playbook_dir}}/create_aws_integration.gql') | replace('\n', ' ') }}"
+  - name: Create payload file
+    template:
+      src: ../../templates/gql_query.source.json
+      dest: "{{ playbook_dir }}/gql_query.json"
+  - name: Create integration
+    shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+      -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+      -L -H 'Content-Type: application/json' \
+      -d @{{ playbook_dir }}/gql_query.json"
+    register: output_create_integration
+  - name: Parse linked_account_id
+    set_fact: 
+      linked_account_id: "{{ output_create_integration.stdout | from_json | json_query(query) }}"
+    vars:
+      query: "data.cloudLinkAccount.linkedAccounts[?name=='{{ aws_integration_name }}'] | [0].id"
+  when: not linked_account_id
+  delegate_to: localhost
+
+# Configure specific cloud integrations
+- block:
+  - name: Create payload
+    template:
+      src: ../../templates/configure_aws_integration.source.gql
+      dest: "{{ playbook_dir }}/configure_aws_integration.gql"
+  - name: Prepare POST payload for graphql
+    set_fact:
+      gql_content: "{{ lookup('file', '{{playbook_dir}}/configure_aws_integration.gql') | replace('\n', ' ') }}"
+  - name: Create payload file
+    template:
+      src: ../../templates/gql_query.source.json
+      dest: "{{ playbook_dir }}/gql_query.json"
+  - name: Configure integration
+    shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+      -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+      -L -H 'Content-Type: application/json' \
+      -d @{{ playbook_dir }}/gql_query.json"
+    register: output_configure_integration
+  when: linked_account_id
