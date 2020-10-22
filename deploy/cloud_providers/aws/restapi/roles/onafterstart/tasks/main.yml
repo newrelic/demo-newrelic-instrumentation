@@ -73,7 +73,7 @@
       template:
         src: ../../templates/role_policy.source.json
         dest: "{{ playbook_dir }}/policy.json"
-    - name: Create a role with description and tags
+    - name: Create a role with description
       iam_role:
         name: "{{ aws_role_name }}"
         aws_access_key: "{{ aws_access_key }}"

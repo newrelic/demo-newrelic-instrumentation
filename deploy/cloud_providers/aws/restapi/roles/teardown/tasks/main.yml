@@ -1,23 +1,36 @@
----
 
 # This play require the following variable set
 #   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   aws_access_key: The aws access key
+#   aws_secret_key: The aws secret key
+#   aws_region: The aws region
 
 # Additional optional fields:
 #   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
-#   azure_integration_name: the azure integration name, otherwise default to "NewRelic Azure integration {{ deployment_name }}"
+#   aws_integration_name: the aws integration name, otherwise default to "NewRelic AWS integration {{ deployment_name }}"
 
 # Testing with EU
 # - set_fact:
 #     newrelic_api_url: "api.eu.newrelic.com"
 
 - debug:
-    msg: "Tearing down Azure cloud provider integration"
+    msg: "Tearing down AWS cloud provider integration"
 
 # NewRelic required field
 - fail:
     msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
   when: newrelic_personal_api_key is not defined
+
+# AWS required fields
+- fail:
+    msg: "A aws_access_key is required. Create this entry in your user config file"
+  when: aws_access_key is not defined
+- fail:
+    msg: "A aws_secret_key is required. Create this entry in your user config file"
+  when: aws_secret_key is not defined
+- fail:
+    msg: "A aws_region is required. Create this entry in your user config file"
+  when: aws_region is not defined
 
 - name: Set default newrelic api url
   set_fact:
@@ -33,8 +46,8 @@
 
 - name: Set default integration name using deployment_name:{{ deployment_name }}
   set_fact:
-    azure_integration_name: "NewRelic Azure integration {{ deployment_name }}"
-  when: azure_integration_name is undefined
+    aws_integration_name: "NewRelic AWS integration {{ deployment_name }}"
+  when: aws_integration_name is undefined
 
 # Find existing integration
 - name: Create payload
@@ -61,7 +74,10 @@
   set_fact: 
     linked_account_id: "{{ output_find_integration.stdout | from_json | json_query(query) }}"
   vars:
-    query: "data.actor.account.cloud.linkedAccounts[?name=='{{ azure_integration_name }}'] | [0].id"
+    query: "data.actor.account.cloud.linkedAccounts[?name=='{{ aws_integration_name }}'] | [0].id"
 
-- include: deleteIntegration.yml 
+- include: deleteIntegration.yml
+  when: linked_account_id is defined
+
+- include: deleteAwsRole.yml 
   when: linked_account_id is defined

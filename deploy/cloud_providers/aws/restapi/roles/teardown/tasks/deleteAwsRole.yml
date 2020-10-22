@@ -1,0 +1,37 @@
+---
+
+- name: Init aws role name for integration
+  set_fact:
+    aws_role_name: "NewRelicInfrastructure-Integrations-{{ deployment_name }}"
+
+- name: Lookup existing role
+  iam_role_info:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    region: "{{ aws_region }}"
+    name: "{{aws_role_name}}"
+  register: output_find_role
+- name: Find role arn
+  set_fact: 
+    aws_role_arn: "{{output_find_role['iam_roles'][0].arn}}"
+  when: output_find_role is defined and (output_find_role['iam_roles']|length > 0)
+
+- block:
+  - name: Remove budget inline policy
+    iam_policy:
+      iam_type: role
+      iam_name: "{{ aws_role_name }}"
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+      policy_name: "NewRelicBudget-{{ deployment_name }}"
+      state: absent
+  - name: Delete role
+    iam_role:
+      name: "{{ aws_role_name }}"
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+      purge_policies: true
+      state: absent
+  when: aws_role_arn is defined and aws_role_arn != ""
