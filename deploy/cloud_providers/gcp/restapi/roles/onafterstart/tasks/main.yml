@@ -106,6 +106,10 @@
       authLabel: "{{ output_create_integration.stdout | from_json | json_query(query) }}"
     vars:
       query: "data.cloudLinkAccount.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].authLabel"
+  - name: Ensure valid authLabel
+    fail:
+      msg: "Could not get valid authLabel, output_create_integration:{{output_create_integration}}"
+    when: authLabel is not defined or authLabel == ""
   # Create GCP member to allow NR to fetch the data
   - name: create infra config file
     template:
