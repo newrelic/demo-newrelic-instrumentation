@@ -1,0 +1,83 @@
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   aws_access_key: The aws access key
+#   aws_secret_key: The aws secret key
+#   aws_region: The aws region
+
+# Additional optional fields:
+#   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
+#   aws_integration_name: the aws integration name, otherwise default to "NewRelic AWS integration {{ deployment_name }}"
+
+# Testing with EU
+# - set_fact:
+#     newrelic_api_url: "api.eu.newrelic.com"
+
+- debug:
+    msg: "Tearing down AWS cloud provider integration"
+
+# NewRelic required field
+- fail:
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+
+# AWS required fields
+- fail:
+    msg: "A aws_access_key is required. Create this entry in your user config file"
+  when: aws_access_key is not defined
+- fail:
+    msg: "A aws_secret_key is required. Create this entry in your user config file"
+  when: aws_secret_key is not defined
+- fail:
+    msg: "A aws_region is required. Create this entry in your user config file"
+  when: aws_region is not defined
+
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api_url: "api.newrelic.com"
+  when: newrelic_api_url is undefined
+- name: Ensure https api url
+  set_fact:
+    newrelic_api_url: "https://{{ newrelic_api_url }}"
+  when: not newrelic_api_url | regex_search('^https', ignorecase=True)
+
+- debug:
+    msg: "Using newrelic_api_url:{{ newrelic_api_url }}"
+
+- name: Set default integration name using deployment_name:{{ deployment_name }}
+  set_fact:
+    aws_integration_name: "NewRelic AWS integration {{ deployment_name }}"
+  when: aws_integration_name is undefined
+
+# Find existing integration
+- name: Create payload
+  template:
+    src: ../../templates/find_integration_id.source.gql
+    dest: "{{ playbook_dir }}/find_integration_id.gql"
+  delegate_to: localhost
+- name: Prepare POST payload for graphql
+  set_fact:
+    gql_content: "{{ lookup('file', '{{playbook_dir}}/find_integration_id.gql') | replace('\n', ' ') }}"
+- name: Create payload file
+  template:
+    src: ../../templates/gql_query.source.json
+    dest: "{{ playbook_dir }}/gql_query.json"
+  delegate_to: localhost
+- name: Execute query
+  shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
+    -H 'Api-Key:{{ newrelic_personal_api_key }}' \
+    -L -H 'Content-Type: application/json' \
+    -d @{{ playbook_dir }}/gql_query.json"
+  register: output_find_integration
+  delegate_to: localhost
+- name: Parse linked_account_id
+  set_fact: 
+    linked_account_id: "{{ output_find_integration.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "data.actor.account.cloud.linkedAccounts[?name=='{{ aws_integration_name }}'] | [0].id"
+
+- include: deleteIntegration.yml
+  when: linked_account_id is defined
+
+- include: deleteAwsRole.yml 
+  when: linked_account_id is defined
