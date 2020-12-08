@@ -23,6 +23,41 @@
 
 - name: Download and Install the newrelic infrastructure agent version {{ version }} with msiexec
   win_shell: |
-    $LICENSE_KEY="{{ newrelic_license_key }}"; (New-Object System.Net.WebClient).DownloadFile("https://download.newrelic.com/infrastructure_agent/windows/newrelic-infra.{{ version }}.msi", "$env:TEMP\newrelic-infra.msi"); msiexec.exe /qn /i "$env:TEMP\newrelic-infra.msi" GENERATE_CONFIG=true LICENSE_KEY="$LICENSE_KEY" | Out-Null;
+    (New-Object System.Net.WebClient).DownloadFile("https://download.newrelic.com/infrastructure_agent/windows/newrelic-infra.{{ version }}.msi", "$env:TEMP\newrelic-infra.msi");
+    msiexec.exe /qn /i "$env:TEMP\newrelic-infra.msi" | Out-Null;
+
+- name: create infra config file
+  win_template:
+    src: newrelic-infra.yml
+    dest: "C:\\Program Files\\New Relic\\newrelic-infra\\newrelic-infra.yml"
+
+- name: Add tags header
+  win_lineinfile:
+    path: "C:\\Program Files\\New Relic\\newrelic-infra\\newrelic-infra.yml"
+    line: "  {{item.key}}: {{item.value}}"
+    insertafter: 'custom_attributes:'
+  loop: "{{ (tags|default({}))|dict2items }}"
+  when: tags is defined
+
+- name: Add newrelic infra collector url for infrastructure
+  win_lineinfile:
+    path: "C:\\Program Files\\New Relic\\newrelic-infra\\newrelic-infra.yml"
+    line: "collector_url: {{ newrelic_infra_collector_url }}"
+    insertafter: 'license_key:'
+  when: newrelic_infra_collector_url is defined
+
+- name: Add newrelic infra command url for infrastructure
+  win_lineinfile:
+    path: "C:\\Program Files\\New Relic\\newrelic-infra\\newrelic-infra.yml"
+    line: "command_channel_url: {{ newrelic_infra_command_url }}"
+    insertafter: 'license_key:'
+  when: newrelic_infra_command_url is defined
+
+- name: Add newrelic identity url for infrastructure
+  win_lineinfile:
+    path: "C:\\Program Files\\New Relic\\newrelic-infra\\newrelic-infra.yml"
+    line: "identity_url: {{ newrelic_identity_url }}"
+    insertafter: 'license_key:'
+  when: newrelic_identity_url is defined
 
 - include_tasks: installLogs.yml
