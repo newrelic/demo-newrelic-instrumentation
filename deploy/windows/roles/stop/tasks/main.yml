@@ -1,0 +1,9 @@
+---
+
+- debug:
+    msg: Stopping NR Infrastructure agent
+
+- name: Stopping the agent
+  win_shell: |
+    net stop newrelic-infra;
+  ignore_errors: yes
