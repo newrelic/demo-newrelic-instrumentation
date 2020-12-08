@@ -7,7 +7,6 @@
 #   nr_infra_collector_url: defaults to US URL if not specified
 #   nr_infra_command_url: defaults to US URL if not specified
 #   nr_identity_url: defaults to US URL if not specified
-#   isLoggingEnabled: defaults to false if not specified. When true, will ship system logs to newrelic logging
 
 - fail:
     msg: "newrelic_license_key is required for Configuring NewRelic Infrastructure Agent"
@@ -25,3 +24,5 @@
 - name: Download and Install the newrelic infrastructure agent version {{ version }} with msiexec
   win_shell: |
     $LICENSE_KEY="{{ newrelic_license_key }}"; (New-Object System.Net.WebClient).DownloadFile("https://download.newrelic.com/infrastructure_agent/windows/newrelic-infra.{{ version }}.msi", "$env:TEMP\newrelic-infra.msi"); msiexec.exe /qn /i "$env:TEMP\newrelic-infra.msi" GENERATE_CONFIG=true LICENSE_KEY="$LICENSE_KEY" | Out-Null;
+
+- include_tasks: installLogs.yml
