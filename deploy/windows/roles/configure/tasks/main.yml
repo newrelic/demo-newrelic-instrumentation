@@ -16,6 +16,12 @@
 - debug:
     msg: Configuring NR Infrastructure agent
 
-- name: Download and Install the newrelic infrastructure agent with msiexec
+- name: Uninstall any previous agent install
   win_shell: |
-    $LICENSE_KEY="{{ newrelic_license_key }}"; (New-Object System.Net.WebClient).DownloadFile("https://download.newrelic.com/infrastructure_agent/windows/newrelic-infra.msi", "$env:TEMP\newrelic-infra.msi"); msiexec.exe /qn /i "$env:TEMP\newrelic-infra.msi" GENERATE_CONFIG=true LICENSE_KEY="$LICENSE_KEY" | Out-Null;
+    $app = Get-WmiObject -Class Win32_Product -Filter "Name = 'New Relic Infrastructure Agent'"
+    $app.Uninstall()
+  ignore_errors: yes
+
+- name: Download and Install the newrelic infrastructure agent version {{ version }} with msiexec
+  win_shell: |
+    $LICENSE_KEY="{{ newrelic_license_key }}"; (New-Object System.Net.WebClient).DownloadFile("https://download.newrelic.com/infrastructure_agent/windows/newrelic-infra.{{ version }}.msi", "$env:TEMP\newrelic-infra.msi"); msiexec.exe /qn /i "$env:TEMP\newrelic-infra.msi" GENERATE_CONFIG=true LICENSE_KEY="$LICENSE_KEY" | Out-Null;
