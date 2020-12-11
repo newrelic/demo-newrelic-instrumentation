@@ -1,0 +1,4 @@
+license_key: {{ newrelic_license_key }}
+display_name: {{ resource_display_name }}
+
+custom_attributes:

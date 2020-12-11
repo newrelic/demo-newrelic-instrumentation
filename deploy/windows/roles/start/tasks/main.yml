@@ -1,0 +1,8 @@
+---
+
+- debug:
+    msg: Restarting NR Infrastructure agent
+
+- name: Starting the agent
+  win_shell: |
+    net start newrelic-infra;
