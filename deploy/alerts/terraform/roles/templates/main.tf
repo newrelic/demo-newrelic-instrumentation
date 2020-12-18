@@ -67,7 +67,7 @@ resource "newrelic_alert_policy" "golden_signal_policy" {
     name = "Golden Signals - ${var.name}"
 }
 
-resource "newrelic_alert_condition" "response_time_web" {
+resource "newrelic_nrql_alert_condition" "response_time_web" {
     policy_id = newrelic_alert_policy.golden_signal_policy.id
 
     name            = "High Response Time (web)"
@@ -85,7 +85,7 @@ resource "newrelic_alert_condition" "response_time_web" {
     }
 }
 
-resource "newrelic_alert_condition" "throughput_web" {
+resource "newrelic_nrql_alert_condition" "throughput_web" {
     policy_id = newrelic_alert_policy.golden_signal_policy.id
 
     name            = "Low Throughput (web)"
@@ -103,7 +103,7 @@ resource "newrelic_alert_condition" "throughput_web" {
     }
 }
 
-resource "newrelic_alert_condition" "error_percentage" {
+resource "newrelic_nrql_alert_condition" "error_percentage" {
     policy_id = newrelic_alert_policy.golden_signal_policy.id
 
     name            = "High Error Percentage"
