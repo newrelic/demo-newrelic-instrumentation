@@ -1,0 +1,74 @@
+---
+
+- name: Ensure newrelic_license_key is defined
+  fail:
+    msg: "newrelic_license_key is required for configuring newrelic infrastructure agent"
+  when: newrelic_license_key is not defined
+
+- name: Ensure database_port is defined
+  fail:
+    msg: "database_port is required for configuring mysql integration"
+  when: database_port is not defined
+
+- name: Ensure database_password is defined
+  fail:
+    msg: "database_password is required for configuring mysql integration"
+  when: database_password is not defined
+
+- name: Check if infrastructure agent logs exist
+  stat:
+    path: /var/log/nr-infra.log
+  register: stat_result
+
+# Clear logs (from previous deployments) to avoid a false positive in the verification step.
+- name: Clear agent logs if they exist
+  shell: truncate -s 0 /var/log/nr-infra.log
+  when: stat_result.stat.exists
+  become: true
+
+- name: Run NewRelic Infrastructure Agent role
+  include_role:
+    name: newrelic.newrelic-infra
+    apply:
+      become: true
+  vars:
+    nrinfragent_config:
+      license_key: "{{ newrelic_license_key }}"
+      log_file: /var/log/nr-infra.log
+      log_to_stdout: false
+    nrinfragent_integrations:
+      - { name: nri-mysql, state: "latest" }
+
+- name: Create db user for newrelic mysql integration
+  mysql_user:
+    login_user: "root"
+    login_password: "{{ database_password }}"
+    name: "newrelic"
+    password: "{{ database_password }}"
+    state: present
+    host: "localhost"
+    priv: "*.*:GRANT,REPLICATION CLIENT"
+
+- name: Write mysql integration configuration file
+  template:
+    src: mysql-config.yml
+    dest: /etc/newrelic-infra/integrations.d/mysql-config.yml
+    owner: root
+  become: true
+
+- name: Restart newrelic infrastructure agent to pick up changes to configuration file
+  systemd:
+    name: newrelic-infra
+    state: restarted
+  become: true
+
+# Give the agent time to start up & write to log
+- name: Wait 15 seconds
+  wait_for:
+    timeout: 15
+  delegate_to: localhost
+
+- name: Verify integration is working
+  shell: cat /var/log/nr-infra.log | grep "\"Integration health check finished with success\" instance=mysql-server"
+  register: integration_status
+  failed_when: integration_status.rc != 0
