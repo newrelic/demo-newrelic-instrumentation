@@ -5,15 +5,9 @@
     msg: "newrelic_license_key is required for configuring newrelic infrastructure agent"
   when: newrelic_license_key is not defined
 
-- name: Ensure database_port is defined
-  fail:
-    msg: "database_port is required for configuring mysql integration"
-  when: database_port is not defined
-
-- name: Ensure database_password is defined
-  fail:
-    msg: "database_password is required for configuring mysql integration"
-  when: database_password is not defined
+- name: Ensure mysql_port has a value
+  set_fact:
+    mysql_port: "{{ database_port | default(3306) }}"
 
 - name: Check if infrastructure agent logs exist
   stat:
