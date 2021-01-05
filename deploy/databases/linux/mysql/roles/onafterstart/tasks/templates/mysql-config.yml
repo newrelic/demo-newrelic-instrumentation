@@ -9,7 +9,7 @@ instances:
         hostname: localhost
         port: {{ mysql_port }}
         username: newrelic
-        password: {{ database_password }}
+        password: {{ newrelic_user_password }}
         # New users should leave this property as `true`, to identify the
         # monitored entities as `remote`. Setting this property to `false` (the
         # default value) is deprecated and will be removed soon, disallowing

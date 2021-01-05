@@ -9,6 +9,29 @@
   set_fact:
     mysql_port: "{{ database_port | default(3306) }}"
 
+- name: Generate temp password
+  set_fact:
+    temp_password: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
+
+- name: Save password to file (idempotent)
+  copy:
+    dest: /usr/local/etc/newrelic
+    owner: root
+    mode: 0700
+    force: false
+    content: |
+      {{ temp_password }}
+  become: true
+
+- name: Get newrelic user password from file
+  shell: cat /usr/local/etc/newrelic
+  register: command_output
+  become: true
+
+- name: Set newrelic_user_password
+  set_fact:
+      newrelic_user_password: "{{ command_output.stdout }}"
+
 - name: Check if infrastructure agent logs exist
   stat:
     path: /var/log/nr-infra.log
@@ -38,7 +61,7 @@
     login_user: "root"
     login_password: "{{ database_password }}"
     name: "newrelic"
-    password: "{{ database_password }}"
+    password: "{{ newrelic_user_password }}"
     state: present
     host: "localhost"
     priv: "*.*:GRANT,REPLICATION CLIENT"
