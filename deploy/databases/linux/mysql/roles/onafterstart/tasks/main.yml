@@ -64,7 +64,7 @@
     password: "{{ newrelic_user_password }}"
     state: present
     host: "localhost"
-    priv: "*.*:GRANT,REPLICATION CLIENT"
+    priv: "*.*:GRANT,REPLICATION CLIENT,SELECT"
 
 - name: Write mysql integration configuration file
   template:
