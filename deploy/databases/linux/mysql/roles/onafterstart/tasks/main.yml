@@ -73,6 +73,15 @@
     owner: root
   become: true
 
+- name: Add tags as labels to integration configuration file
+  lineinfile:
+    path: "/etc/newrelic-infra/integrations.d/mysql-config.yml"
+    line: "        {{item.key}}: {{item.value}}"
+    insertafter: 'labels:'
+  loop: "{{ (tags|default({}))|dict2items }}"
+  when: tags is defined
+  become: true
+
 - name: Restart newrelic infrastructure agent to pick up changes to configuration file
   systemd:
     name: newrelic-infra

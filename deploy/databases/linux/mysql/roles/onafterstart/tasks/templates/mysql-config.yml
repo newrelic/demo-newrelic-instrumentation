@@ -24,5 +24,3 @@ instances:
         extended_innodb_metrics: 1
         extended_myisam_metrics: 1
     labels:
-        env: production
-        role: write-replica
