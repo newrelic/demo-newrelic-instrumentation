@@ -32,17 +32,6 @@
   set_fact:
       newrelic_user_password: "{{ command_output.stdout }}"
 
-- name: Check if infrastructure agent logs exist
-  stat:
-    path: /var/log/nr-infra.log
-  register: stat_result
-
-# Clear logs (from previous deployments) to avoid a false positive in the verification step.
-- name: Clear agent logs if they exist
-  shell: truncate -s 0 /var/log/nr-infra.log
-  when: stat_result.stat.exists
-  become: true
-
 - name: Run NewRelic Infrastructure Agent role
   include_role:
     name: newrelic.newrelic-infra
@@ -80,6 +69,11 @@
     insertafter: 'labels:'
   loop: "{{ (tags|default({}))|dict2items }}"
   when: tags is defined
+  become: true
+
+# Clear logs (potentially from previous deployments) to avoid a false positive in the verification step.
+- name: Clear agent logs
+  shell: truncate -s 0 /var/log/nr-infra.log
   become: true
 
 - name: Restart newrelic infrastructure agent to pick up changes to configuration file
