@@ -88,13 +88,10 @@
     state: restarted
   become: true
 
-# Give the agent time to start up & write to log
-- name: Wait 15 seconds
-  wait_for:
-    timeout: 15
-  delegate_to: localhost
-
 - name: Verify integration is working
   shell: cat /var/log/nr-infra.log | grep "\"Integration health check finished with success\" instance=mysql-server"
   register: integration_status
-  failed_when: integration_status.rc != 0
+  until: integration_status.rc == 0
+  retries: 12
+  delay: 5
+  # max_wait = 12 * 5 = 60 seconds
