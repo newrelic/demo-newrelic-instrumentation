@@ -74,7 +74,7 @@
       -d @{{ playbook_dir }}/gql_query.json"
     register: output_find_integration
   - name: Parse linked_account_id
-    set_fact: 
+    set_fact:
       linked_account_id: "{{ output_find_integration.stdout | from_json | json_query(query) }}"
     vars:
       query: "data.actor.account.cloud.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].id"
@@ -102,7 +102,7 @@
       -d @{{ playbook_dir }}/gql_query.json"
     register: output_create_integration
   - name: Parse authLabel
-    set_fact: 
+    set_fact:
       authLabel: "{{ output_create_integration.stdout | from_json | json_query(query) }}"
     vars:
       query: "data.cloudLinkAccount.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].authLabel"
@@ -121,7 +121,7 @@
     shell: "terraform apply -auto-approve"
   # Fetch new linked_account_id (must be after everything else not to skip any previous steps)
   - name: Parse linked_account_id
-    set_fact: 
+    set_fact:
       linked_account_id: "{{ output_create_integration.stdout | from_json | json_query(query) }}"
     vars:
       query: "data.cloudLinkAccount.linkedAccounts[?name=='{{ gcp_integration_name }}'] | [0].id"

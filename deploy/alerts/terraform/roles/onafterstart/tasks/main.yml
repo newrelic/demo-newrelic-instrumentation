@@ -70,6 +70,24 @@
 
   - name: "Initialize terraform"
     shell: "terraform init"
+    register: results
+    ignore_errors: True
+
+  - name: S3 Bucket Creation Message
+    vars:
+      msg: |
+           The S3 Bucket creation failed.  This is probably due to the bucket already existing.
+           Either remove the S3 bucket or tear down and rename your user config file or deployment config file and re-run you deployment.
+           Error From Boto
+           "{{ results.stderr }}"
+    when: results.rc != 0
+    debug:
+      msg: "{{ msg.split('\n') }}"
+
+  - name: S3 Bucker Creation failure
+    fail:
+      msg: ""
+    when: results.rc != 0
 
   - name: "Execute terraform apply"
     shell: "terraform apply -auto-approve -var-file={{ playbook_dir }}/tfvars.json"
@@ -79,4 +97,5 @@
     until: terraform_result is not failed
 
   delegate_to: localhost
+
 
