@@ -1,0 +1,57 @@
+---
+
+# This play require the following variable set
+#   newrelic_personal_api_key: "<from user config newrelic credential>"
+#   newrelic_account_id: the newrelic account id
+
+# Additional optional fields:
+#   newrelic_api_url: the URL for the newrelic REST API, default to main us URL
+#   dashboard_name: the dashboard name, otherwise default to "Golden {{ deployment_name }}"
+
+# Testing with EU
+# - set_fact:
+#     newrelic_api_url: "api.eu.newrelic.com"
+
+- debug:
+    msg: "Deleting dashboard for {{ deployment_name }} using REST v2 API"
+
+- fail:
+    msg: "A newrelic nrPersonalApiKey is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+
+- name: Set default newrelic api url
+  set_fact:
+    newrelic_api_url: "api.newrelic.com"
+  when: newrelic_api_url is undefined
+- name: Ensure https api url
+  set_fact:
+    newrelic_api_url: "https://{{ newrelic_api_url }}"
+  when: not newrelic_api_url | regex_search('^https', ignorecase=True)
+
+- debug:
+    msg: "Using newrelic_api_url:{{ newrelic_api_url }}"
+
+- name: Set default dashboard name using deployment_name:{{ deployment_name }}
+  set_fact:
+    dashboard_name: "Golden {{ deployment_name }}"
+  when: dashboard_name is undefined
+
+- name: Get application_id
+  shell: "curl -X GET '{{ newrelic_api_url }}/v2/dashboards.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' \
+     -L"
+  register: existing_dashboards
+
+- set_fact: 
+    dashboard_id: "{{ existing_dashboards.stdout | from_json | json_query(query) }}"
+  vars:
+    query: "dashboards[?title=='{{ dashboard_name }}'] | [0].id"
+
+- name: Delete existing policy {{ policy_name }}
+  shell: "curl -X DELETE '{{ newrelic_api_url }}/v2/dashboards/{{ dashboard_id }}.json' \
+     -H 'Api-Key:{{ newrelic_personal_api_key }}' -H 'Auth-Type:User-Api-Key' -L"
+  when: dashboard_id
+
+- debug:
+    msg: "No existing dashboard found for {{ dashboard_name }}"
+  when: not dashboard_id
