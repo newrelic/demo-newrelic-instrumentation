@@ -1,59 +1,32 @@
 ---
-
 - name: Ensure newrelic_license_key is defined
   fail:
     msg: "newrelic_license_key is required for configuring newrelic infrastructure agent"
   when: newrelic_license_key is not defined
 
+- name: Ensure root_user_password is defined
+  fail:
+    msg: "root_user_password is required for creating the integration's database user"
+  when: root_user_password is not defined
+
 - name: Ensure mysql_port has a value
   set_fact:
     mysql_port: "{{ database_port | default(3306) }}"
 
-- name: Generate temp password
+- name: Generate newrelic user password
   set_fact:
-    temp_password: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
-
-- name: Save password to file (idempotent)
-  copy:
-    dest: /usr/local/etc/newrelic
-    owner: root
-    mode: 0700
-    force: false
-    content: |
-      {{ temp_password }}
-  become: true
-
-- name: Get newrelic user password from file
-  shell: cat /usr/local/etc/newrelic
-  register: command_output
-  become: true
-
-- name: Set newrelic_user_password
-  set_fact:
-      newrelic_user_password: "{{ command_output.stdout }}"
-
-- name: Run NewRelic Infrastructure Agent role
-  include_role:
-    name: newrelic.newrelic-infra
-    apply:
-      become: true
-  vars:
-    nrinfragent_config:
-      license_key: "{{ newrelic_license_key }}"
-      log_file: /var/log/nr-infra.log
-      log_to_stdout: false
-    nrinfragent_integrations:
-      - { name: nri-mysql, state: "latest" }
+    newrelic_user_password: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
 
 - name: Create db user for newrelic mysql integration
-  mysql_user:
+  community.mysql.mysql_user:
     login_user: "root"
-    login_password: "{{ database_password }}"
+    login_password: "{{ root_user_password }}"
     name: "newrelic"
     password: "{{ newrelic_user_password }}"
     state: present
     host: "localhost"
     priv: "*.*:GRANT,REPLICATION CLIENT,SELECT"
+    update_password: always
 
 - name: Write mysql integration configuration file
   template:
