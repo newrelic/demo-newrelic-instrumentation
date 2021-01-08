@@ -4,10 +4,10 @@
     msg: "newrelic_license_key is required for configuring newrelic infrastructure agent"
   when: newrelic_license_key is not defined
 
-- name: Ensure root_user_password is defined
+- name: Ensure database_root_password is defined
   fail:
-    msg: "root_user_password is required for creating the integration's database user"
-  when: root_user_password is not defined
+    msg: "database_root_password is required for creating the integration's database user"
+  when: database_root_password is not defined
 
 - name: Ensure mysql_port has a value
   set_fact:
@@ -20,7 +20,7 @@
 - name: Create db user for newrelic mysql integration
   community.mysql.mysql_user:
     login_user: "root"
-    login_password: "{{ root_user_password }}"
+    login_password: "{{ database_root_password }}"
     name: "newrelic"
     password: "{{ newrelic_user_password }}"
     state: present
