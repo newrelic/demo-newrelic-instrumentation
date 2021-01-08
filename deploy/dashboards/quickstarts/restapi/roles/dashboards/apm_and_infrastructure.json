@@ -1,0 +1,209 @@
+{
+    "name": "APM and Infrastructure",
+    "description": "",
+    "pages": [
+        {
+            "name": "APM and Infrastructure",
+            "description": "",
+            "widgets": [
+                {
+                    "visualization": {
+                        "id": "viz.bar"
+                    },
+                    "layout": {
+                        "column": 1,
+                        "row": 1,
+                        "height": 3,
+                        "width": 4
+                    },
+                    "title": "Application Names",
+                    "configuration": {
+                        "area": null,
+                        "line": null,
+                        "bar": {
+                            "queries": [
+                                {
+                                    "accountId": 0,
+                                    "nrql": "SELECT average(duration) FROM Transaction, ProcessSample FACET appName"
+                                }
+                            ]
+                        },
+                        "billboard": null,
+                        "pie": null,
+                        "table": null,
+                        "markdown": null
+                    }
+                },
+                {
+                    "visualization": {
+                        "id": "viz.line"
+                    },
+                    "layout": {
+                        "column": 5,
+                        "row": 1,
+                        "height": 3,
+                        "width": 8
+                    },
+                    "title": "APM Response Time",
+                    "configuration": {
+                        "area": null,
+                        "line": {
+                            "queries": [
+                                {
+                                    "accountId": 0,
+                                    "nrql": "SELECT average(duration) from Transaction TIMESERIES since 6 hours ago facet appName"
+                                }
+                            ]
+                        },
+                        "bar": null,
+                        "billboard": null,
+                        "pie": null,
+                        "table": null,
+                        "markdown": null
+                    }
+                },
+                {
+                    "visualization": {
+                        "id": "viz.table"
+                    },
+                    "layout": {
+                        "column": 1,
+                        "row": 4,
+                        "height": 6,
+                        "width": 4
+                    },
+                    "title": "Transaction Durations",
+                    "configuration": {
+                        "area": null,
+                        "line": null,
+                        "bar": null,
+                        "billboard": null,
+                        "pie": null,
+                        "table": {
+                            "queries": [
+                                {
+                                    "accountId": 0,
+                                    "nrql": "SELECT average(duration) from Transaction facet name"
+                                }
+                            ]
+                        },
+                        "markdown": null
+                    }
+                },
+                {
+                    "visualization": {
+                        "id": "viz.line"
+                    },
+                    "layout": {
+                        "column": 5,
+                        "row": 4,
+                        "height": 3,
+                        "width": 8
+                    },
+                    "title": "CPU Usage (Infrastructure)",
+                    "configuration": {
+                        "area": null,
+                        "line": {
+                            "queries": [
+                                {
+                                    "accountId": 0,
+                                    "nrql": "FROM SystemSample SELECT average(cpuPercent) FACET hostname TIMESERIES since 6 hours ago"
+                                }
+                            ]
+                        },
+                        "bar": null,
+                        "billboard": null,
+                        "pie": null,
+                        "table": null,
+                        "markdown": null
+                    }
+                },
+                {
+                    "visualization": {
+                        "id": "viz.line"
+                    },
+                    "layout": {
+                        "column": 5,
+                        "row": 7,
+                        "height": 3,
+                        "width": 8
+                    },
+                    "title": "CPU by Host (Infrastructure)",
+                    "configuration": {
+                        "area": null,
+                        "line": {
+                            "queries": [
+                                {
+                                    "accountId": 0,
+                                    "nrql": "FROM SystemSample SELECT average(cpuPercent) TIMESERIES since 6 hours ago facet hostname"
+                                }
+                            ]
+                        },
+                        "bar": null,
+                        "billboard": null,
+                        "pie": null,
+                        "table": null,
+                        "markdown": null
+                    }
+                },
+                {
+                    "visualization": {
+                        "id": "viz.bar"
+                    },
+                    "layout": {
+                        "column": 1,
+                        "row": 10,
+                        "height": 3,
+                        "width": 4
+                    },
+                    "title": "Top Processes",
+                    "configuration": {
+                        "area": null,
+                        "line": null,
+                        "bar": {
+                            "queries": [
+                                {
+                                    "accountId": 0,
+                                    "nrql": "SELECT average(cpuPercent) FROM ProcessSample  FACET processDisplayName  LIMIT 100 SINCE 60 minutes ago"
+                                }
+                            ]
+                        },
+                        "billboard": null,
+                        "pie": null,
+                        "table": null,
+                        "markdown": null
+                    }
+                },
+                {
+                    "visualization": {
+                        "id": "viz.line"
+                    },
+                    "layout": {
+                        "column": 5,
+                        "row": 10,
+                        "height": 3,
+                        "width": 8
+                    },
+                    "title": "Processes",
+                    "configuration": {
+                        "area": null,
+                        "line": {
+                            "queries": [
+                                {
+                                    "accountId": 0,
+                                    "nrql": "SELECT average(cpuPercent) FROM ProcessSample TIMESERIES FACET processDisplayName  LIMIT 100 SINCE 60 minutes ago"
+                                }
+                            ]
+                        },
+                        "bar": null,
+                        "billboard": null,
+                        "pie": null,
+                        "table": null,
+                        "markdown": null
+                    }
+                }
+            ]
+        }
+    ],
+    "permissions": "private"
+}
