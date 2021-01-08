@@ -1,16 +1,16 @@
 ---
-
-- fail:
-    msg: "version is required for preparing NewRelic MySQL Integration"
-  when: agent_version is not defined
-
-- name: Ensure infrastructure agent is installed
+# The MySQL integration needs the newrelic-infra agent to be installed. This loop was added so that if the two roles -- one installing the agent, one installing the integration -- run simultaenously or in opposite order, this role will give the other one minute to successfully complete.
+- name: Ensure infrastructure agent is installed before installing MySQL integration
   shell: yum list | grep newrelic-infra
   register: agent_status
   until: agent_status.rc == 0
   retries: 12
   delay: 5
   # max_wait = 12 * 5 = 60 seconds
+
+- fail:
+    msg: "version is required for preparing NewRelic MySQL Integration"
+  when: agent_version is not defined
 
 - debug:
     msg: Installing nri-mysql-{{ agent_version }}
