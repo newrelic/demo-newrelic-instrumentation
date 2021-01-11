@@ -9,9 +9,10 @@
     msg: "database_root_password is required for creating the integration's database user"
   when: database_root_password is not defined
 
-- name: Ensure mysql_port has a value
-  set_fact:
-    mysql_port: "{{ database_port | default(3306) }}"
+- name: Ensure database_port is defined
+  fail:
+    msg: "database_port is required for setting up the integration"
+  when: database_port is not defined
 
 - name: Generate newrelic user password
   set_fact:

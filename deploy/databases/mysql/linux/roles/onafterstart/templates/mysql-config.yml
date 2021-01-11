@@ -7,7 +7,7 @@ instances:
     command: status
     arguments:
         hostname: localhost
-        port: {{ mysql_port }}
+        port: {{ database_port }}
         username: newrelic
         password: {{ newrelic_user_password }}
         # New users should leave this property as `true`, to identify the
