@@ -45,12 +45,15 @@
   uri:
     url: "{{ dashboard_template_url }}"
     return_content: yes
-  register: dashboard_template_result
+  register: dashboard_template_json
+
+- debug:
+    msg: "{{ dashboard_template_json }}"
 
 - name: Store dashboard json in file
   copy:
     dest: "{{ playbook_dir }}/dashboard.json"
-    content: "{{ dashboard_template_result.json }}"
+    content: " {{ dashboard_template_json.content }}"
 
 - name: Replace accountId 
   replace:
@@ -58,10 +61,18 @@
     regexp: '"accountId": 0'
     replace: '"accountId": {{ newrelic_account_id }}'
 
-- name: Read the modified dashboard json
+# - name: Read the modified dashboard json
+#   set_fact:
+#     # The space after the quote is intentational and prevents ansible from evaluating it as json
+#     dashboard_template_json: "{{ lookup('file', playbook_dir + '/dashboard.json') | to_json }}"
+
+- name: Create dashboard argument for query
+  shell: sed -E 's/(^ *)"([^"]*)"([^\s]*:)/\1\2\3/' "{{ playbook_dir }}/dashboard.json"
+  register: sed_output
+
+- name: Register dashboard argument for query
   set_fact:
-    # The space after the quote is intentational and prevents ansible from evaluating it as json
-    dashboard_template_json: "{{ lookup('file', playbook_dir + '/dashboard.json') | to_json }}"
+    dashboard_argument: "{{ sed_output.stdout }}"
 
 - name: Create graphql query
   template:
@@ -72,24 +83,15 @@
   set_fact:
     payload: "{{ lookup('file', playbook_dir + '/dashboard_query.gql') }}"
 
-- debug:
-    msg: "payload: {{ payload }}"
-
-- name: debug file
-  copy:
-    dest: "{{ playbook_dir }}/debug_payload.txt"
-    content: "{{ payload }}"
-
 - name: Create payload file
   template:
     src: gql_query.source.json
     dest: "{{ playbook_dir }}/gql_query.json"
   delegate_to: localhost  
     
-- name: Create Workload
+- name: Create Dashboard
   shell: "curl -X POST '{{ newrelic_api_url }}/graphql' \
      -H 'Api-Key:{{ newrelic_personal_api_key }}' \
      -L -H 'Content-Type: application/json' \
-     -d @{{ playbook_dir }}/gql_query.json"
+     -d @{{ playbook_dir }}/gql_query.json > output"
   delegate_to: localhost
-

@@ -1,5 +1,5 @@
 mutation {
-  dashboardCreate(accountId: {{ newrelic_account_id }}, dashboard: {{ dashboard_template_json }}) {
+  dashboardCreate(accountId: {{ newrelic_account_id }}, dashboard: {{ dashboard_argument }}) {
     entityResult {
         guid
     }
