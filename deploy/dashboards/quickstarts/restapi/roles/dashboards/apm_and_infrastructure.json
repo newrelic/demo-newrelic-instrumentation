@@ -205,5 +205,5 @@
             ]
         }
     ],
-    "permissions": "private"
+    "permissions": PRIVATE
 }
