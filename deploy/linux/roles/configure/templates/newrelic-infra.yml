@@ -1,4 +1,6 @@
 license_key: {{ newrelic_license_key }}
 display_name: {{ resource_display_name }}
 
+log_file: /var/log/nr-infra.log
+
 custom_attributes:

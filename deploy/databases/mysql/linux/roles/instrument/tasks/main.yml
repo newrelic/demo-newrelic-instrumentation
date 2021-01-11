@@ -1,0 +1,55 @@
+---
+# The MySQL integration needs the newrelic-infra agent to be installed. This loop was added so that if the two roles -- one installing the agent, one installing the integration -- run simultaenously or in opposite order, this role will give the other one minute to successfully complete.
+- name: Ensure infrastructure agent is installed before installing MySQL integration
+  shell: yum list | grep newrelic-infra
+  register: agent_status
+  until: agent_status.rc == 0
+  retries: 12
+  delay: 5
+  # max_wait = 12 * 5 = 60 seconds
+
+- fail:
+    msg: "version is required for preparing NewRelic MySQL Integration"
+  when: agent_version is not defined
+
+- debug:
+    msg: Installing nri-mysql-{{ agent_version }}
+
+- block:
+  - name: check aws linux2 version
+    shell: cat /etc/os-release | grep "Linux 2" | wc -l
+    register: awslinux2
+
+  - name: check linux7 version
+    shell: cat /etc/os-release | grep "Linux 7" | wc -l
+    register: linux7
+
+  - name: install mysql integration linux
+    yum:
+      name: 'https://download.newrelic.com/infrastructure_agent/linux/yum/el/6/x86_64/nri-mysql-{{ agent_version }}-1.x86_64.rpm'
+      state: present
+    when: awslinux2.stdout|int == 0 and linux7.stdout|int == 0
+    ignore_errors: yes
+    register: result
+
+  - name: install mysql integration linux alternate name
+    yum:
+      name: 'https://download.newrelic.com/infrastructure_agent/linux/yum/el/6/x86_64/nri-mysql-{{ agent_version }}-1.el6.x86_64.rpm'
+      state: present
+    when: (awslinux2.stdout|int == 0 and linux7.stdout|int == 0) and result is failed
+
+  - name: install mysql integration linux 2
+    yum:
+      name: 'https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64/nri-mysql-{{ agent_version }}-1.x86_64.rpm'
+      state: present
+    when: awslinux2.stdout|int > 0 or linux7.stdout|int > 0
+    ignore_errors: yes
+    register: result
+
+  - name: install mysql integration linux 2 alternate name
+    yum:
+      name: 'https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64/nri-mysql-{{ agent_version }}-1.el7.x86_64.rpm'
+      state: present
+    when: (awslinux2.stdout|int > 0 or linux7.stdout|int > 0) and result is failed
+
+  become: yes

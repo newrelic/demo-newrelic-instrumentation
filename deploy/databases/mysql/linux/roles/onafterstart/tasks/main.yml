@@ -1,0 +1,65 @@
+---
+- name: Ensure newrelic_license_key is defined
+  fail:
+    msg: "newrelic_license_key is required for configuring newrelic infrastructure agent"
+  when: newrelic_license_key is not defined
+
+- name: Ensure database_root_password is defined
+  fail:
+    msg: "database_root_password is required for creating the integration's database user"
+  when: database_root_password is not defined
+
+- name: Ensure database_port is defined
+  fail:
+    msg: "database_port is required for setting up the integration"
+  when: database_port is not defined
+
+- name: Generate newrelic user password
+  set_fact:
+    newrelic_user_password: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
+
+- name: Create db user for newrelic mysql integration
+  community.mysql.mysql_user:
+    login_user: "root"
+    login_password: "{{ database_root_password }}"
+    name: "newrelic"
+    password: "{{ newrelic_user_password }}"
+    state: present
+    host: "localhost"
+    priv: "*.*:GRANT,REPLICATION CLIENT,SELECT"
+    update_password: always
+
+- name: Write mysql integration configuration file
+  template:
+    src: mysql-config.yml
+    dest: /etc/newrelic-infra/integrations.d/mysql-config.yml
+    owner: root
+  become: true
+
+- name: Add tags as labels to integration configuration file
+  lineinfile:
+    path: "/etc/newrelic-infra/integrations.d/mysql-config.yml"
+    line: "        {{item.key}}: {{item.value}}"
+    insertafter: 'labels:'
+  loop: "{{ (tags|default({}))|dict2items }}"
+  when: tags is defined
+  become: true
+
+# Clear logs (potentially from previous deployments) to avoid a false positive in the verification step.
+- name: Clear agent logs
+  shell: truncate -s 0 /var/log/nr-infra.log
+  become: true
+
+- name: Restart newrelic infrastructure agent to pick up changes to configuration file
+  systemd:
+    name: newrelic-infra
+    state: restarted
+  become: true
+
+- name: Verify integration is working
+  shell: cat /var/log/nr-infra.log | grep "\"Integration health check finished with success\" instance=mysql-server"
+  register: integration_status
+  until: integration_status.rc == 0
+  retries: 12
+  delay: 5
+  # max_wait = 12 * 5 = 60 seconds
