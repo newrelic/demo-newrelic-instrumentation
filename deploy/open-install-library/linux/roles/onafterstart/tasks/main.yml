@@ -1,0 +1,61 @@
+---
+# Parameters:
+# recipe_content_urls: An array of URLs to get recipes in a raw format for example ["https://api.github.com/repos/newrelic/open-install-library/contents/recipes/newrelic/infra-agent/amazonlinux2.yml"]
+# newrelic_personal_api_key: The newrelic personal api key. It typically starts with NRAK-
+# newrelic_license_key: The newrelic license key used to setup the infrastructure agent that is required for the MySQL instrumentation
+# newrelic_account_id: (optional) The newrelic account id
+# newrelic_region: (optional) The newrelic region. Typically "US".
+
+- fail:
+    msg: "A newrelic_personal_api_key is required. Create this entry in your user config file"
+  when: newrelic_personal_api_key is not defined
+
+- fail:
+    msg: "A newrelic_license_key is required. Create this entry in your user config file"
+  when: newrelic_license_key is not defined
+
+- name: Prepare environment variables for newrelic-cli execution
+  set_fact:
+    env_vars: "NEW_RELIC_LICENSE_KEY={{ newrelic_license_key }} NEW_RELIC_API_KEY={{ newrelic_personal_api_key }} NEW_RELIC_CLI_PRERELEASEFEATURES=ALLOW"
+
+- name: Adding newrelic accountId environment variable
+  set_fact:
+    env_vars: "{{ env_vars }} NEW_RELIC_ACCOUNT_ID={{ newrelic_account_id }}"
+  when: newrelic_account_id is defined
+
+- name: Adding newrelic region environment variable
+  set_fact:
+    env_vars: "{{ env_vars }} NEW_RELIC_REGION={{ newrelic_region }}"
+  when: newrelic_region is defined
+
+- name: "Copy all NR_CLI_ variable to env vars"
+  set_fact:
+    env_vars: "{{ env_vars }} {{item}}={{vars[item]}}"
+  with_items: "{{ vars }}"
+  when: item | regex_search("NR_CLI_")
+
+- name: Install newrelic-cli
+  shell: "curl -Ls https://raw.githubusercontent.com/newrelic/newrelic-cli/master/scripts/install.sh | sudo bash"
+
+- name: Run install tasks if defined
+  shell: "{{ env_vars }} /usr/local/bin/newrelic install -y -c {{ item }}"
+  loop: "{{ recipe_content_url }}"
+  register: output
+  when:  recipe_content_url is defined and recipe_content_url | length > 0
+  become: true
+
+- debug:
+    msg: "output:{{ item.stdout }}"
+  loop: "{{ output.results }}"
+  when: output is defined and output.results is defined
+
+- name: Run auto discovery install if no recipes defined
+  shell: "{{ env_vars }} /usr/local/bin/newrelic install -y"
+  register: output
+  when:  recipe_content_url is not defined or recipe_content_url | length == 0
+  become: true
+
+- debug:
+    msg: "output:{{ item.stdout }}"
+  loop: "{{ output.results }}"
+  when: output is defined and output.results is defined
