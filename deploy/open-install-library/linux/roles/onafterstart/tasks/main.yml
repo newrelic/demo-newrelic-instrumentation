@@ -39,9 +39,9 @@
 
 - name: Run install tasks if defined
   shell: "{{ env_vars }} /usr/local/bin/newrelic install -y -c {{ item }}"
-  loop: "{{ recipe_content_url }}"
+  loop: "{{ recipe_content_urls }}"
   register: output
-  when:  recipe_content_url is defined and recipe_content_url | length > 0
+  when:  recipe_content_urls is defined and recipe_content_urls | length > 0
   become: true
 
 - debug:
@@ -52,7 +52,7 @@
 - name: Run auto discovery install if no recipes defined
   shell: "{{ env_vars }} /usr/local/bin/newrelic install -y"
   register: output
-  when:  recipe_content_url is not defined or recipe_content_url | length == 0
+  when:  recipe_content_urls is not defined or recipe_content_urls | length == 0
   become: true
 
 - debug:
