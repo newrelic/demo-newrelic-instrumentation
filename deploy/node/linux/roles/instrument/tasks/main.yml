@@ -198,7 +198,7 @@
   when: winston_file is defined
 
 - name: Install NR winston enricher plugin
-  shell: "npm install @newrelic/winston-enricher --save"
+  shell: "npm install @newrelic/winston-enricher@2.1.2 --save"
   args:
     chdir: "{{ package_file | dirname }}"
   when: winston_file is defined
