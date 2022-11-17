@@ -35,7 +35,7 @@
       format: zip
   delegate_to: localhost
 
-- s3_bucket:
+- amazon.aws.s3_bucket:
     aws_access_key: "{{ aws_access_key }}"
     aws_secret_key: "{{ aws_secret_key }}"
     region: "{{ aws_region }}"
@@ -87,7 +87,7 @@
       SourceFunctionName: "{{ lambda_function_name }}"
       BucketName: "{{ lambda_function_name }}-nrli-{{ api_id }}"
 
-- s3_bucket:
+- amazon.aws.s3_bucket:
     aws_access_key: "{{ aws_access_key }}"
     aws_secret_key: "{{ aws_secret_key }}"
     region: "{{ aws_region }}"
