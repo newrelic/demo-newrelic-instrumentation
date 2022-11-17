@@ -18,7 +18,7 @@
       dest: "{{ playbook_dir }}/aws-log-ingestion.zip"
 
   - name: Unarchive New Relic aws-log-ingest project
-    unarchive:
+    ansible.builtin.unarchive:
       src: "{{ playbook_dir }}/aws-log-ingestion.zip"
       dest: "{{ playbook_dir }}/"
 
@@ -28,7 +28,7 @@
       chdir: "{{ playbook_dir }}/aws-log-ingestion-master/src/"
 
   - name: Archive aws-log-ingest's function.py file
-    archive:
+    community.general.archive:
       path:
         - "{{ playbook_dir }}/aws-log-ingestion-master/src/"
       dest: "{{ playbook_dir }}/aws-log-ingestion-master/src/lambda.zip"
