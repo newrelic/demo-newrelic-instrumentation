@@ -103,7 +103,7 @@
   when: dt_found is changed
 
 # Tags
-- name: Format tags into a colon separated list string
+- name: Format tags into a colon separated list string key1:value1;key2:value2...
   set_fact:
     tags_string: "{{ tags_string | default('') }};{{item.key}}:{{item.value}}"
   loop: "{{ (tags|default({}))|dict2items }}"
@@ -115,6 +115,7 @@
 - name: display tags
   debug:
     msg: "using tags {{ tags_string }}"
+  when: tags_string is defined
 
 - name: Any any tags
   blockinfile:
