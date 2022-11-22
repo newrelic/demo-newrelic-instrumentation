@@ -41,15 +41,21 @@
     }}"
   when: newrelic_collector_url is defined
 
-- name: Format tags into a list
+# Tags
+- name: Format tags into a colon separated list string key1:value1;key2:value2...
   set_fact:
-    tags_list: "{{ tags_list | default([]) }} + [ '{{item.key}}{{':'}}{{item.value}}' ]"
+    tags_string: "{{ tags_string | default('') }};{{item.key}}:{{item.value}}"
   loop: "{{ (tags|default({}))|dict2items }}"
   when: tags is defined
-- name: Format tags list into a single string
+- name: trim tags
   set_fact:
-    tags_string: "{{ tags_list | join(';') }}"
-  when: tags_list is defined
+    tags_string: "{{ tags_string | regex_replace('^;', '') }}"
+  when: tags_string is defined
+- name: display tags
+  debug:
+    msg: "using tags {{ tags_string }}"
+  when: tags_string is defined
+
 - set_fact:
     nr_java_agent_config_vars: "{{ nr_java_agent_config_vars | combine({
         'labels': '{{ tags_string }}'
