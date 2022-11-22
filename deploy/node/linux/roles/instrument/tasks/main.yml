@@ -102,20 +102,28 @@
     replace: 'enabled: true'
   when: dt_found is changed
 
-- name: Format tags into a list
+# Tags
+- name: Format tags into a colon separated list string
   set_fact:
-    tags_list: "{{ tags_list | default([]) }} + [ '{{item.key}}{{':'}}{{item.value}}' ]"
+    tags_string: "{{ tags_string | default('') }};{{item.key}}:{{item.value}}"
   loop: "{{ (tags|default({}))|dict2items }}"
   when: tags is defined
+- name: trim tags
+  set_fact:
+    tags_string: "{{ tags_string | regex_replace('^;', '') }}"
+  when: tags_string is defined
+- name: display tags
+  debug:
+    msg: "using tags {{ tags_string }}"
 
 - name: Any any tags
   blockinfile:
     path: "{{ package_file | dirname }}/newrelic.js"
     insertafter: ".*exports.config*."
     marker: "// {mark} Add service tags"
-    block: |
-      labels: '{{tags_list| join(";")}}',
-  when: tags_list is defined
+    block: |2
+        labels: '{{tags_string}}',
+  when: tags_string is defined
 
 - name: Ensure views directory exist
   file:
